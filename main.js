@@ -98,8 +98,8 @@ app.post('/generate', async (req, res) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                // --- FIX: Use the lightweight instruction-tuned model ---
-                model: 'qwen2:0.5b-instruct-q4_0',
+                // --- FIX: Update to the new, smaller model ---
+                model: 'qwen2.5:0.5b',
                 messages: [{ role: 'user', content: prompt }],
                 stream: false
             })
