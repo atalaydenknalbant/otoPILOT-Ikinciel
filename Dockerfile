@@ -2,7 +2,8 @@
 FROM ollama/ollama:latest as ollama
 
 # Stage 2: Build the Node.js application
-FROM mcr.microsoft.com/playwright/javascript:v1.45.1-jammy
+# --- FIX: Use a stable and correct base image tag ---
+FROM mcr.microsoft.com/playwright/javascript:jammy
 
 WORKDIR /app
 
@@ -17,7 +18,7 @@ RUN npm install
 # Copy the rest of the app
 COPY . .
 
-# --- FIX: Pull the ultra-lightweight instruction-tuned model ---
+# Pull the lightweight, instruction-tuned model during the build
 RUN ollama serve & sleep 5 && ollama pull qwen2:0.5b-instruct-q4_0 && killall ollama
 
 # Expose the port our Node.js app will listen on
