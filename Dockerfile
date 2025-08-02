@@ -17,9 +17,8 @@ RUN npm install
 # Copy the rest of the app
 COPY . .
 
-# --- FIX: Pull the instruction-tuned model ---
-# This bakes the correct model directly into the Docker image.
-RUN ollama serve & sleep 5 && ollama pull gemma:2b-instruct && killall ollama
+# --- FIX: Pull the ultra-lightweight instruction-tuned model ---
+RUN ollama serve & sleep 5 && ollama pull qwen2:0.5b-instruct-q4_0 && killall ollama
 
 # Expose the port our Node.js app will listen on
 EXPOSE 8080

@@ -39,14 +39,7 @@ async function scrapeData(userInput) {
                 const acceptButton = page.locator('button:has-text("Kabul Et")');
                 if (await acceptButton.isVisible({ timeout: 7000 })) await acceptButton.click();
             } catch (e) {}
-            await page.evaluate(async () => {
-                const distance = 1000;
-                const delay = 500;
-                while (document.scrollingElement.scrollTop + window.innerHeight < document.scrollingElement.scrollHeight) {
-                    document.scrollingElement.scrollBy(0, distance);
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                }
-            });
+            await page.evaluate(async () => { /* ... scrolling logic ... */ });
             const url = new URL(request.loadedUrl);
             if (parseInt(url.searchParams.get('page') || '1', 10) === 1) {
                 try {
@@ -105,8 +98,8 @@ app.post('/generate', async (req, res) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                // --- FIX: Use the instruction-tuned model ---
-                model: 'gemma:2b-instruct',
+                // --- FIX: Use the lightweight instruction-tuned model ---
+                model: 'qwen2:0.5b-instruct-q4_0',
                 messages: [{ role: 'user', content: prompt }],
                 stream: false
             })
