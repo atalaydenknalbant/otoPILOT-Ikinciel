@@ -3,7 +3,7 @@ FROM ollama/ollama:latest as ollama
 
 # Stage 2: Build the Node.js application
 # --- FIX: Use a stable and correct base image tag ---
-FROM mcr.microsoft.com/playwright/javascript:jammy
+FROM mcr.microsoft.com/playwright:v1.44.0-jammy
 
 WORKDIR /app
 
@@ -29,3 +29,4 @@ RUN echo '#!/bin/bash\nollama serve &\nsleep 5\nnode main.js' > /app/start.sh &&
 
 # The command to run when the container starts
 CMD ["/app/start.sh"]
+
