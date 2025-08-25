@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { --radius: 10px; }
+
+.container { @apply max-w-7xl mx-auto px-4; }
+
+.search-pill { @apply rounded-full bg-white shadow-soft border border-gray-200; }
+
+.btn { @apply inline-flex items-center justify-center rounded-md px-4 py-2 font-medium transition; }
+.btn-primary { @apply bg-brand-600 text-white hover:bg-brand-700; }
+.btn-ghost { @apply text-gray-700 hover:bg-gray-100; }
+
+.card { @apply bg-white rounded-xl shadow-soft border border-gray-100; }
+
+/* Marquee for brand strip */
+@keyframes marquee-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.marquee {
+  position: relative;
+  overflow: hidden;
+}
+.marquee-track {
+  display: flex;
+  gap: 2rem;
+  width: max-content;
+  animation: marquee-scroll 25s linear infinite;
+}
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
