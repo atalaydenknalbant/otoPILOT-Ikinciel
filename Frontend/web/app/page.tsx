@@ -1,7 +1,6 @@
 "use client"
 import Header from '../components/Header'
 import ResultList from '../components/ResultList'
-import ManualFilters from '../components/ManualFilters'
 import ModelStatus from '../components/ModelStatus'
 import { useState } from 'react'
 import ParsedChips from '../components/ParsedChips'
@@ -11,7 +10,13 @@ export default function Page() {
   const [aiMode, setAiMode] = useState(false)
   const [loading, setLoading] = useState(false)
   const [items, setItems] = useState<any[]>([])
-  const [parsed, setParsed] = useState<any | null>(null)
+  const [parsed, setParsed] = useState<any | null>({
+    ana_kategori: [],
+    renkler: [],
+    vites: [],
+    arac_durumu: [],
+    boya_degişen_parca: [],
+  })
   const [modelReady, setModelReady] = useState(false)
   const onApplyParsed = async (next: any) => {
     setParsed(next)
@@ -34,36 +39,27 @@ export default function Page() {
         onParsed={setParsed}
         modelReady={modelReady}
         onModelReady={setModelReady}
+        parsed={parsed}
       />
 
-      <section className="container mt-6">
+      <section className="mx-auto w-full max-w-[1400px] px-4 md:px-6 mt-6">
         {/* Model durum göstergesi - ileride WebLLM için kullanılacak */}
         <ModelStatus aiMode={aiMode} />
       </section>
 
-      {/* Manuel filtreler - AI kapalıyken görünür */}
-      {!aiMode && (
-        <section className="container mt-6">
-          <ManualFilters onResults={setItems} onLoading={setLoading} />
-        </section>
-      )}
+      {/* Algılanan Filtreler - AI ya da Manuel her iki modda da tek kaynak */}
+      <section className="mx-auto w-full max-w-[1400px] px-4 md:px-6 mt-6">
+        <ParsedChips
+          parsed={parsed}
+          loading={loading}
+          onChange={setParsed}
+          onApply={onApplyParsed}
+        />
+      </section>
 
-      {/* Backend parsed pretty view */}
-      {parsed && (
-        <section className="container mt-6">
-          <ParsedChips
-            parsed={parsed}
-            loading={loading}
-            onChange={setParsed}
-            onApply={onApplyParsed}
-          />
-        </section>
-      )}
-
-      <section className="container mt-8">
+      <section className="mx-auto w-full max-w-[1400px] px-4 md:px-6 mt-8">
         <ResultList items={items} loading={loading} />
       </section>
     </main>
   )
 }
-
