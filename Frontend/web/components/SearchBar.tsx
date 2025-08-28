@@ -89,6 +89,13 @@ export default function SearchBar({
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => {
+              // Enter'a basıldığında formun otomatik submit edilmesini engelle
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                e.stopPropagation()
+              }
+            }}
             placeholder={'Örn: 2020+ dizel SUV 700k TL altı'}
             className="flex-1 bg-transparent outline-none py-2"
           />
