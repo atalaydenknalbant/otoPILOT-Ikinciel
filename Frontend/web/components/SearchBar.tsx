@@ -108,3 +108,4 @@ export default function SearchBar({
 
 // not: otomatik arama için kullanılan debounce kaldırıldı
 //push oldu
+//
