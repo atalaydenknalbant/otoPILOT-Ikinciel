@@ -24,33 +24,7 @@ export default function SearchBar({
   const [q, setQ] = useState(
     `boyasız, 2020'den yeni, 3.000.000 TL altındaki maksimum 100000 km beyaz veya siyah renkli bmw 3 serisi otomatik vitesli arabaları bul., en yeni ilana göre sırala`
   )
-  const debounced = useDebounce(q, 400)
-
-  useEffect(() => {
-    if (!aiMode) return
-    if (!debounced.trim()) return
-    let cancelled = false
-    ;(async () => {
-      onLoading(true)
-      try {
-        const parsedJson: any = await parseWithLocalModel(debounced)
-        const lockMarka = Boolean((parsed as any)?.['_lock_marka'])
-        const lockModel = Boolean((parsed as any)?.['_lock_model'])
-        let merged: any = (parsedJson && typeof parsedJson === 'object') ? { ...parsedJson } : {}
-        if (lockMarka) merged.marka = (parsed as any)?.marka ?? merged.marka
-        if (lockModel) merged.model = (parsed as any)?.model ?? merged.model
-        if (lockMarka) merged._lock_marka = true
-        if (lockModel) merged._lock_model = true
-        if (!cancelled) onParsed?.(merged)
-        const items = await scrapeSearch(merged)
-        if (!cancelled) onResults(items)
-        if (!cancelled) onModelReady(true)
-      } finally {
-        if (!cancelled) onLoading(false)
-      }
-    })()
-    return () => { cancelled = true }
-  }, [debounced, aiMode, parsed])
+  // Otomatik arama kaldırıldı. Artık sadece "Ara" tıklandığında işlem yapılacak.
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -105,21 +79,10 @@ export default function SearchBar({
       </div>
       {/* Manual mode: hide textbox, show model status and guidance */}
       {!aiMode ? (
-        <div className="w-full">
-          {!modelReady ? (
-            <div className="flex flex-col gap-2">
-              <div className="text-sm text-gray-700">Model yükleniyor…</div>
-              <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-                <div className="h-2 bg-brand-600 animate-pulse w-1/2"></div>
-              </div>
-              <div className="text-xs text-gray-500">Model yüklendikten sonra yapay zeka ile arayabilirsiniz.</div>
-            </div>
-          ) : (
-            <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg">
-              Model yüklendi. Yapay zeka ile arayabilirsiniz.
-            </div>
-          )}
-        </div>
+        <form onSubmit={onSubmit} className="flex items-center gap-3">
+          <button className="btn btn-primary" type="submit">Ara</button>
+          <div className="text-xs text-gray-500">Filtreleri doldurduktan sonra Ara'ya basın.</div>
+        </form>
       ) : (
         <form onSubmit={onSubmit} className="search-pill flex items-center gap-3 px-4 py-2">
           <span className="text-gray-500">🔎</span>
@@ -136,13 +99,4 @@ export default function SearchBar({
   )
 }
 
-function useDebounce<T>(value: T, delay = 400) {
-  const [v, setV] = useState(value)
-  const t = useRef<NodeJS.Timeout | null>(null)
-  useEffect(() => {
-    if (t.current) clearTimeout(t.current)
-    t.current = setTimeout(() => setV(value), delay)
-    return () => { if (t.current) clearTimeout(t.current) }
-  }, [value, delay])
-  return v
-}
+// not: otomatik arama için kullanılan debounce kaldırıldı

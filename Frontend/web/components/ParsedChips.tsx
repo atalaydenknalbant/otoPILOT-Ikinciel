@@ -144,6 +144,24 @@ export default function ParsedChips({ parsed, loading, onChange, onApply }: Prop
 
   // Toggle helper for arrays
   const toggleArrayItem = (key: string, value: string) => {
+    // Özel kural: 'ana_kategori' için 'Kiralık Araçlar' tek başına seçilebilir
+    if (key === 'ana_kategori') {
+      const RENT = 'Kiralık Araçlar'
+      const current: string[] = Array.isArray(parsed?.[key]) ? [...parsed[key]] : []
+      const hasRent = current.includes(RENT)
+      if (value === RENT) {
+        // Kiralık seçilirse sadece o kalsın
+        const next = current.includes(RENT) ? current.filter(v => v !== RENT) : [RENT]
+        setField(key, next)
+        return
+      }
+      // Diğer bir kategori seçiliyorsa ve Kiralık seçiliyse, önce Kiralık'ı kaldır
+      const cleaned = hasRent ? current.filter(v => v !== RENT) : current
+      const idx = cleaned.indexOf(value)
+      if (idx >= 0) cleaned.splice(idx, 1); else cleaned.push(value)
+      setField(key, cleaned)
+      return
+    }
     const arr: string[] = Array.isArray(parsed?.[key]) ? [...parsed[key]] : []
     const idx = arr.indexOf(value)
     if (idx >= 0) arr.splice(idx, 1); else arr.push(value)
@@ -164,6 +182,7 @@ export default function ParsedChips({ parsed, loading, onChange, onApply }: Prop
     }, [])
     const selected: string[] = Array.isArray(parsed?.[keyName]) ? parsed[keyName] : []
     const summary = selected.length ? `${selected.length} seçili` : 'Seçiniz'
+    const rentExclusive = keyName === 'ana_kategori' && selected.includes('Kiralık Araçlar')
     return (
       <div className="relative" ref={ref}>
         <button type="button" onClick={() => setOpen(v => !v)} className="inline-flex items-center justify-between gap-2 bg-white border border-gray-200 rounded-xl px-3 py-1.5 shadow-sm text-sm min-w-[220px]">
@@ -176,9 +195,11 @@ export default function ParsedChips({ parsed, loading, onChange, onApply }: Prop
             <div className="grid grid-cols-1 gap-1">
               {options.map((opt) => {
                 const checked = selected.includes(opt)
+                // Kiralık seçiliyse diğer seçenekleri kilitle
+                const disabled = keyName === 'ana_kategori' && rentExclusive && opt !== 'Kiralık Araçlar'
                 return (
-                  <label key={opt} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-50 cursor-pointer text-sm">
-                    <input type="checkbox" className="accent-brand-600" checked={checked} onChange={() => toggleArrayItem(keyName, opt)} />
+                  <label key={opt} className={`flex items-center gap-2 px-2 py-1 rounded text-sm ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}`} title={disabled ? 'Kiralık Araçlar seçiliyken diğer kategoriler seçilemez' : ''}>
+                    <input type="checkbox" className="accent-brand-600" checked={checked} disabled={disabled} onChange={() => toggleArrayItem(keyName, opt)} />
                     <span>{opt}</span>
                   </label>
                 )
