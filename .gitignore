@@ -1,0 +1,53 @@
+# Global ignores for this mono-repo
+
+# Node / Next.js
+node_modules/
+**/node_modules/
+.next/
+**/.next/
+.npmrc
+npm-debug.log*
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
+build/
+dist/
+.out/
+.turbo/
+coverage/
+
+# Python
+.venv/
+**/.venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Env & secrets
+.env
+.env.*
+*.env
+
+# IDE/editor
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# App data / runtime storage
+storage/
+**/storage/
+.apify_storage/
+
+# Logs
+logs/
+**/logs/
+*.log
+
+# Misc
+*.swp
+*.swo
