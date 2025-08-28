@@ -1,0 +1,30 @@
+# Global
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
+.env
+.env.local
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Node/Next.js (Frontend)
+Frontend/web/node_modules/
+Frontend/web/.next/
+Frontend/web/.turbo/
+Frontend/web/.vercel/
+Frontend/web/out/
+Frontend/web/dist/
+Frontend/web/build/
+
+# Lockfiles (optional, keep if you want deterministic builds)
+# package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Misc
+coverage/

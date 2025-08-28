@@ -9,6 +9,7 @@ export default function Header({
   onParsed,
   modelReady,
   onModelReady,
+  parsed,
 }: {
   aiMode: boolean
   onModeChange: (b: boolean) => void
@@ -17,6 +18,7 @@ export default function Header({
   onParsed?: (json: any) => void
   modelReady: boolean
   onModelReady: (b: boolean) => void
+  parsed?: any
 }) {
   return (
     <header className="bg-white/70 backdrop-blur border-b border-gray-100">
@@ -31,6 +33,7 @@ export default function Header({
             onParsed={onParsed}
             modelReady={modelReady}
             onModelReady={onModelReady}
+            parsed={parsed}
           />
         </div>
         <div className="hidden md:flex items-center gap-2">
