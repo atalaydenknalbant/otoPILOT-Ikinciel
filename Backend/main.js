@@ -27,6 +27,7 @@ const SIRALAMA_DEFAULTS = {
   'Kilometre - Düşükten Yükseğe': 'km.asc',
   'Kilometre - Yüksekten Düşüğe': 'km.desc',
   'Tarih - Yeniden Eskiye': 'startedAt.desc',
+  'Tarih - Eskiden Yeniye': 'startedAt.asc',
 };
 
 // Build the detailed system prompt with valid options from category data (exactly as in Python)
