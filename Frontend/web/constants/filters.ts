@@ -39,4 +39,5 @@ export const SIRALAMA_MAP: Record<string, string> = {
   "Kilometre - Düşükten Yükseğe": "km.asc",
   "Kilometre - Yüksekten Düşüğe": "km.desc",
   "Tarih - Yeniden Eskiye": "startedAt.desc",
+  "Tarih - Eskiden Yeniye": "startedAt.asc",
 }
