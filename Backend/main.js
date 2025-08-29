@@ -6,7 +6,7 @@ import { ArabamScraper } from './scrape.js';
 
 const app = express();
 const PORT = process.env.PORT || 8080;
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '150mb' }));
 
 // Ollama configuration (single-pass like Python)
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
