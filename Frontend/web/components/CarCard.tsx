@@ -1,6 +1,6 @@
-import Image from 'next/image'
+import type { SearchItem } from '../types'
 
-export default function CarCard({ item }: { item: any }) {
+export default function CarCard({ item }: { item: SearchItem }) {
   const {
     imageUrl,
     url,

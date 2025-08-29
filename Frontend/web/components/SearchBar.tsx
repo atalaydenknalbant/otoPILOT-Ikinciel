@@ -1,6 +1,8 @@
 "use client"
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useState } from 'react'
+import type React from 'react'
 import { parseWithLocalModel, scrapeSearch } from '../lib/api'
+import type { Parsed, SearchItem } from '../types'
 
 export default function SearchBar({
   aiMode,
@@ -14,12 +16,12 @@ export default function SearchBar({
 }: {
   aiMode: boolean
   onModeChange: (b: boolean) => void
-  onResults: (items: any[]) => void
+  onResults: (items: SearchItem[]) => void
   onLoading: (b: boolean) => void
-  onParsed?: (json: any) => void
+  onParsed?: (json: Parsed) => void
   modelReady: boolean
   onModelReady: (b: boolean) => void
-  parsed?: any
+  parsed?: Parsed
 }) {
   const [q, setQ] = useState(
     `boyasız, 2020'den yeni, 3.000.000 TL altındaki maksimum 100000 km beyaz veya siyah renkli bmw 3 serisi otomatik vitesli arabaları bul., en yeni ilana göre sırala`
@@ -31,20 +33,20 @@ export default function SearchBar({
     onLoading(true)
     try {
       if (aiMode) {
-        const parsedJson: any = await parseWithLocalModel(q)
-        const lockMarka = Boolean((parsed as any)?.['_lock_marka'])
-        const lockModel = Boolean((parsed as any)?.['_lock_model'])
-        let merged: any = (parsedJson && typeof parsedJson === 'object') ? { ...parsedJson } : {}
-        if (lockMarka) merged.marka = (parsed as any)?.marka ?? merged.marka
-        if (lockModel) merged.model = (parsed as any)?.model ?? merged.model
-        if (lockMarka) merged._lock_marka = true
-        if (lockModel) merged._lock_model = true
-        onParsed?.(merged)
-        const items = await scrapeSearch(merged)
+        const parsedJson: unknown = await parseWithLocalModel(q)
+        const lockMarka = Boolean(parsed?.['_lock_marka'])
+        const lockModel = Boolean(parsed?.['_lock_model'])
+        const base: Parsed = parsedJson && typeof parsedJson === 'object' ? { ...(parsedJson as Parsed) } : {}
+        if (lockMarka) base.marka = parsed?.marka ?? base.marka
+        if (lockModel) base.model = parsed?.model ?? base.model
+        if (lockMarka) base._lock_marka = true
+        if (lockModel) base._lock_model = true
+        onParsed?.(base)
+        const items = await scrapeSearch(base)
         onResults(items)
         onModelReady(true)
       } else {
-        const next = { ...(parsed || {}), searchText: q }
+        const next: Parsed = { ...(parsed || {}), searchText: q }
         onParsed?.(next)
         const items = await scrapeSearch(next)
         onResults(items)
@@ -62,30 +64,40 @@ export default function SearchBar({
             className={`px-3 py-1 text-sm rounded-full ${!aiMode ? 'bg-white shadow-sm' : 'text-gray-600'}`}
             onClick={() => onModeChange(false)}
           >
-            Manuel Arama
+            Filtrelerle Ara
           </button>
           <button
             className={`px-3 py-1 text-sm rounded-full ${aiMode ? 'bg-white shadow-sm' : 'text-gray-600'}`}
             onClick={() => onModeChange(true)}
           >
-            AI ile Arama
+            Yapay Zeka ile Ara
           </button>
         </div>
         {aiMode && !modelReady && (
           <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
-            Model yüklenene kadar lütfen Manuel Arama kullanın.
+            Yapay zeka modeli yükleniyor; bu sırada filtrelerle arama yapabilirsiniz.
+          </div>
+        )}
+        {aiMode && modelReady && (
+          <div className="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+            Yapay zeka modeli yüklendi.
           </div>
         )}
       </div>
-      {/* Manual mode: hide textbox, show model status and guidance */}
+      {/* Manual mode: no button here; search is triggered by ParsedChips "Uygula" */}
       {!aiMode ? (
-        <form onSubmit={onSubmit} className="flex items-center gap-3">
-          <button className="btn btn-primary" type="submit">Ara</button>
-          <div className="text-xs text-gray-500">Filtreleri doldurduktan sonra Ara'ya basın.</div>
-        </form>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-xl shadow-sm">
+            <span>ℹ️</span>
+            <span>
+              Yapay zeka modeli yüklenene kadar arama yapmak için <span className="font-semibold">filtreleri</span> doldurun ve aşağıdaki <b>Uygula</b> butonuna basın.
+            </span>
+          </div>
+        </div>
       ) : (
         <form onSubmit={onSubmit} className="search-pill flex items-center gap-3 px-4 py-2">
           <span className="text-gray-500">🔎</span>
+
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -99,13 +111,10 @@ export default function SearchBar({
             placeholder={'Örn: 2020+ dizel SUV 700k TL altı'}
             className="flex-1 bg-transparent outline-none py-2"
           />
-          <button className="btn btn-primary" type="submit">Ara</button>
+          <button className="btn btn-gradient" type="submit">Yapay Zeka ile Ara</button>
         </form>
       )}
+
     </div>
   )
 }
-
-// not: otomatik arama için kullanılan debounce kaldırıldı
-//push oldu
-//

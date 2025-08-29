@@ -1,6 +1,7 @@
 import CarCard from './CarCard'
+import type { SearchItem } from '../types'
 
-export default function ResultList({ items, loading }: { items: any[]; loading: boolean }) {
+export default function ResultList({ items, loading }: { items: SearchItem[]; loading: boolean }) {
   if (loading) return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {Array.from({ length: 6 }).map((_, i) => (
