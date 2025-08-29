@@ -2,15 +2,17 @@
 import Header from '../components/Header'
 import ResultList from '../components/ResultList'
 import ModelStatus from '../components/ModelStatus'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import ParsedChips from '../components/ParsedChips'
 import { scrapeSearch } from '../lib/api'
+import { useMockModelLoader } from '../hooks/useMockModelLoader'
+import type { Parsed, SearchItem } from '../types'
 
 export default function Page() {
   const [aiMode, setAiMode] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [items, setItems] = useState<any[]>([])
-  const [parsed, setParsed] = useState<any | null>({
+  const [items, setItems] = useState<SearchItem[]>([])
+  const [parsed, setParsed] = useState<Parsed>({
     ana_kategori: [],
     renkler: [],
     vites: [],
@@ -18,7 +20,11 @@ export default function Page() {
     boya_degişen_parca: [],
   })
   const [modelReady, setModelReady] = useState(false)
-  const onApplyParsed = async (next: any) => {
+  const { progress, ready } = useMockModelLoader(aiMode && !modelReady)
+  useEffect(() => {
+    if (ready) setModelReady(true)
+  }, [ready])
+  const onApplyParsed = async (next: Parsed) => {
     setParsed(next)
     setLoading(true)
     try {
@@ -43,8 +49,8 @@ export default function Page() {
       />
 
       <section className="mx-auto w-full max-w-[1400px] px-4 md:px-6 mt-6">
-        {/* Model durum göstergesi - ileride WebLLM için kullanılacak */}
-        <ModelStatus aiMode={aiMode} />
+        {/* Model durum göstergesi */}
+        <ModelStatus modelReady={modelReady} progress={progress} />
       </section>
 
       {/* Algılanan Filtreler - AI ya da Manuel her iki modda da tek kaynak */}

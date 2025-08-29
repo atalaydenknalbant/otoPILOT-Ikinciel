@@ -1,5 +1,6 @@
 "use client"
 import { useMemo, useState } from 'react'
+import Image from 'next/image'
 
 // Candidate brands; component will try /brands/<slug>.svg then .png
 const CANDIDATES = [
@@ -18,11 +19,12 @@ function BrandLogo({ slug }: { slug: string }) {
       className="shrink-0 w-16 h-16 rounded-xl border border-gray-200 bg-white shadow-sm mx-2 flex items-center justify-center hover:bg-gray-50"
       title={slug}
     >
-      <img
+      <Image
         src={src}
         alt={slug}
+        width={32}
+        height={32}
         className="w-8 h-8 object-contain opacity-80"
-        loading="lazy"
         onError={() => {
           if (ext === 'svg') setExt('png')
           else setHidden(true)

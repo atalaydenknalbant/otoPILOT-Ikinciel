@@ -1,8 +1,9 @@
 "use client"
 import { useState } from 'react'
 import { scrapeSearch } from '../lib/api'
+import type { Parsed, SearchItem } from '../types'
 
-export default function ManualFilters({ onResults, onLoading }: { onResults: (items: any[]) => void, onLoading: (b: boolean) => void }) {
+export default function ManualFilters({ onResults, onLoading }: { onResults: (items: SearchItem[]) => void, onLoading: (b: boolean) => void }) {
   const [brand, setBrand] = useState('')
   const [model, setModel] = useState('')
   const [minYear, setMinYear] = useState('')
@@ -16,15 +17,15 @@ export default function ManualFilters({ onResults, onLoading }: { onResults: (it
       const cap = (s: string) => norm(s).replace(/(^|\s)\S/g, (t) => t.toUpperCase())
       const b = cap(brand)
       const m = cap(model)
-      const payload: any = {
-        brand: b || undefined,
+      const payload: Parsed = {
+        marka: b || undefined,
         model: m || undefined,
-        minYear: minYear ? Number(minYear) : undefined,
-        maxPrice: maxPrice ? Number(maxPrice) : undefined,
+        minYil: minYear ? Number(minYear) : undefined,
+        maxFiyat: maxPrice ? Number(maxPrice) : undefined,
         // Backend scraper çoğu zaman searchText ile daha hedefli arıyor
         searchText: [b, m].filter(Boolean).join(' ').trim() || undefined,
         // Varsayılan kategoriyi açıkça belirtelim
-        main_category: ['Otomobil'],
+        ana_kategori: ['Otomobil'],
       }
       const items = await scrapeSearch(payload)
       onResults(items)

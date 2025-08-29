@@ -12,7 +12,10 @@ export async function POST(req: Request) {
     })
     const data = await res.json()
     return new Response(JSON.stringify(data), { status: res.status, headers: { 'Content-Type': 'application/json' } })
-  } catch (e: any) {
-    return new Response(JSON.stringify({ error: 'proxy_error', detail: String(e) }), { status: 500, headers: { 'Content-Type': 'application/json' } })
+  } catch (e: unknown) {
+    return new Response(
+      JSON.stringify({ error: 'proxy_error', detail: e instanceof Error ? e.message : String(e) }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    )
   }
 }
