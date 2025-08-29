@@ -28,3 +28,15 @@ pnpm-lock.yaml
 
 # Misc
 coverage/
+
+
+Backend/node_modules/
+Backend/storage/key_value_stores/default/SDK_CRAWLER_STATISTICS_0.json
+Backend/storage/key_value_stores/default/SDK_CRAWLER_STATISTICS_1.json
+Backend/storage/request_queues/default/__metadata__.json
+Backend/storage/request_queues/default/__metadata__.json
+Backend/storage/request_queues/default/fiqb761erUOW7Mz.json
+Backend/storage/request_queues/default/M3mDQE5hzsbJgYO.json
+Backend/storage/key_value_stores/default/SDK_SESSION_POOL_STATE.json
+Backend/storage/request_queues/default/ZujEFNrFOGh88oK.json
+Backend/storage/key_value_stores/default/SDK_CRAWLER_STATISTICS_2.json
