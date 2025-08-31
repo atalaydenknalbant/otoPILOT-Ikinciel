@@ -10,7 +10,7 @@ app.use(express.json({ limit: '150mb' }));
 
 // Ollama configuration 
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'tykefencer/otomodel_v1.1_q8';
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'tykefencer/otomodel_v1.2_q8';
 const ollama = new Ollama({ host: OLLAMA_URL });
 
 // Load categories JSON (UI options)
