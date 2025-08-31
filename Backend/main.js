@@ -256,8 +256,8 @@ app.post('/scrape', async (req, res) => {
         mainCategories = inferred;
         log.info(`Kategori belirtilmemişti; marka+model ile çıkarıldı: ${JSON.stringify(inferred)}`);
       } else {
-        log.warning("Scrape için kategori belirtilmedi, varsayılan 'Otomobil' kullanılıyor.");
-        mainCategories = ['Otomobil'];
+        log.warning("Scrape için kategori belirtilmedi, varsayılan 'Otomobil', 'Arazi, SUV, Pick-up', 'Minivan & Panelvan' kullanılıyor.");
+        mainCategories = ['Otomobil', 'Arazi, SUV, Pick-up', 'Minivan & Panelvan'];
       }
     }
     
