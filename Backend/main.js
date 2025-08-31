@@ -108,18 +108,19 @@ GEÇERLİ SEÇENEKLER
 "takasa_uygun":"string"}
 
 KURALLAR
-1. ANA KATEGORİ: İlk anahtar "ana_kategori" olmalıdır. Kullanıcı "kiralık" derse SADECE ["Kiralık Araçlar"] yaz.
-   Belirsizse ["Otomobil","Arazi, SUV, Pick-up","Minivan & Panelvan"] kullan.
-2. TÜM ALANLAR: Tüm anahtarlar bulunmalı. Belirtilmeyen alanlar null, "" veya [] olmalı.
-3. TÜRKÇE ANAHTAR: Anahtarlar sadece listelenen Türkçe anahtarlar olmalı.
-4. ÇEVİRİ YASAK: Değerleri İngilizceye çevirme.
-5. ÇOKLU DEĞER: Renk ve vites gibi çoklu değerleri tek dizide birleştir.
-6. searchText: Sadece standart filtre dışındaki tanımlayıcı ifadeler. Marka model veya komut kelimeleri olmasın.
-7. "motor" kelimesini searchText’e yazma. "1.6 motor tdi" -> "1.6 tdi".
-8. Filtre ayrımı: "otomatik","düz" -> vites. "1.6 TDi" gibi ifadeler -> searchText.
-9. Aralık yorumları: "X'ten yeni","X üstü","minimum X" -> min. "X'ten eski","X altı","maksimum X" -> max.
-10. Sıralama: Verilmediyse "" bırak.
-11. Lokasyon: İlçe verilse bile çıktıda SADECE "il" olsun ve ili yaz. Birden fazla il olabilir.
+1.  **ANA KATEGORİ:** Çıktıdaki ilk anahtar "ana_kategori" olmalıdır.
+    -   Kullanıcı "kiralık" derse, "ana_kategori" SADECE ["Kiralık Araçlar"] olmalıdır.
+    -   Eğer yukarıdaki koşullar sağlanmazsa ve kategori belirsizse, varsayılan olarak \`["Otomobil", "Arazi, SUV, Pick-up", "Minivan & Panelvan"]\` kullan.
+2.  **TÜM ALANLARI DOLDUR:** Çıktıda BÜTÜN olası anahtarlar bulunmalıdır. Belirtilmeyen alanların değeri boş (""), null veya boş dizi ([]) olmalıdır.
+3.  **TÜRKÇE ANAHTAR KULLAN:** JSON anahtarları daima şu listeden olmalıdır: "ana_kategori", "marka", "model", "minYil", "maxYil", "minFiyat", "maxFiyat", "minKm", "maxKm", "renkler", "vites", "siralama", "arac_durumu", "agir_hasar_kayitli", "takasa_uygun", "boya_degişen_parca", "searchText".
+4.  **ÇEVİRİ YASAK:** Değerleri ASLA İngilizce'ye çevirme. "3 Serisi" -> "3 Serisi" olarak kalmalıdır.
+5.  **DEĞERLERİ BİRLEŞTİR:** Kullanıcı birden çok renk veya vites belirtirse, bunları ilgili anahtar altında TEK BİR DİZİDE birleştir.
+6.  **searchText KULLANIMI:** YALNIZCA "yumurta kasa", "çelik jantlı" gibi standart filtreler DIŞINDAKİ tanımlayıcı ifadeleri bu alana yaz. Marka, model veya komut kelimeleri ("bul", "getir", "sorgula", "listele", "ara") ASLA bu alana YAZMA. Eğer böyle bir ifade yoksa, alanı boş bırak: "".
+7.  **searchText NORMALİZASYONU:** Kullanıcı "1.6 motor tdi" gibi bir ifade kullanırsa, "searchText" alanına "motor" kelimesini çıkararak "1.6 tdi" şeklinde yaz. motor kelimesini hiçbir zaman yazma.
+8.  **FİLTRE AYRIMI:** "otomatik", "düz" gibi ifadeler "vites" alanına, "1.6 TDi" gibi motor/donanım bilgileri ise 'searchText' alanına yazılmalıdır.
+9.  **ARALIKLARI DOĞRU YORUMLA:** "X'ten yeni", "X üstü", "minimum X" gibi ifadeler min (en az) değerini belirtir (örn: "minYil", "minKm"). "X'ten eski", "X altı", "maksimum X" gibi ifadeler max (en fazla) değerini belirtir (örn: "maxYil", "maxKm"). BU KURAL ÇOK ÖNEMLİDİR.
+10. **SIRALAMA:** Eğer kullanıcı sıralama belirtirse, "siralama" alanını uygun şekilde doldur. Eğer sıralama yoksa, bu alanı boş bırak: "".
+11. **LOKASYON:** Kullanıcı ilçe belirtse bile, JSON çıktısında SADECE "il" alanı bulunsun ve bu alana ilçenin ait olduğu il (örn: "İstanbul-Avrupa") yazılsın. 'ilce' anahtarı çıktıda yer almasın. Birden fazla il olabilir.
 
 Yalnızca tek bir geçerli JSON nesnesi döndür. Açıklama ekleme.`
   );
