@@ -1,4 +1,4 @@
-import type { ParsedFilters, CarItem } from './types'
+import type { ParsedFilters, CarItem, ScrapeResponse } from './types'
 
 // Frontend calls go through Next.js API routes to avoid CORS.
 // Backend is proxied server-side from /api/* to http://127.0.0.1:8080/*
@@ -24,8 +24,8 @@ export async function parseWithLocalModel(query: string): Promise<ParsedFilters>
   }
 }
 
-// POST /scrape with parsed params
-export async function scrapeSearch(filters: ParsedFilters): Promise<CarItem[]> {
+// POST /scrape with parsed params. Returns items and optional normalized filters.
+export async function scrapeSearch(filters: ParsedFilters): Promise<ScrapeResponse> {
   try {
     const res = await fetch(`${API_BASE}/api/scrape`, {
       method: 'POST',
@@ -34,12 +34,16 @@ export async function scrapeSearch(filters: ParsedFilters): Promise<CarItem[]> {
     })
     if (res.ok) {
       const data = await res.json()
-      const items = Array.isArray(data) ? data : data?.items || []
-      return items as CarItem[]
+      if (Array.isArray(data)) {
+        return { items: data as CarItem[] }
+      }
+      const items = (data?.items || []) as CarItem[]
+      const filt = (data?.filters || undefined) as Record<string, unknown> | undefined
+      return { items, filters: filt }
     }
   } catch {}
   // Mock sonuçlar (backend kapalıysa)
-  return [
+  return { items: [
     {
       imageUrl: 'https://picsum.photos/seed/car1/640/360',
       url: '#',
@@ -62,5 +66,5 @@ export async function scrapeSearch(filters: ParsedFilters): Promise<CarItem[]> {
       date: 'Dün',
       source: 'Mock',
     },
-  ]
+  ] }
 }

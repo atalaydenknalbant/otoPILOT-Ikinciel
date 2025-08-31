@@ -28,8 +28,11 @@ export default function Page() {
     setParsed(next)
     setLoading(true)
     try {
-      const items = await scrapeSearch(next)
-      setItems(items)
+      const resp = await scrapeSearch(next)
+      setItems(resp.items)
+      if (resp.filters) {
+        setParsed(prev => ({ ...(prev || {}), ...(resp.filters as any) }))
+      }
     } finally {
       setLoading(false)
     }

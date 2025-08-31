@@ -18,3 +18,8 @@ export type CarItem = {
   date?: string
   source?: string
 }
+
+export type ScrapeResponse = {
+  items: CarItem[]
+  filters?: Record<string, unknown>
+}

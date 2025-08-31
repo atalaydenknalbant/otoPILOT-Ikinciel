@@ -28,28 +28,64 @@ export default function SearchBar({
   )
   // Otomatik arama kaldırıldı. Artık sadece "Ara" tıklandığında işlem yapılacak.
 
+  // LLM dönüşünü sağlamlaştır: İngilizce anahtarları Türkçe alanlara dönüştür
+  function normalizeLLMToTurkish(raw: unknown): Parsed {
+    const src = (raw && typeof raw === 'object') ? (raw as Record<string, any>) : {}
+    const out: Parsed = { ...(src as any) }
+
+    const map: Record<string, string> = {
+      main_category: 'ana_kategori',
+      brand: 'marka',
+      model: 'model',
+      minYear: 'minYil',
+      maxYear: 'maxYil',
+      minPrice: 'minFiyat',
+      maxPrice: 'maxFiyat',
+      minKm: 'minKm',
+      maxKm: 'maxKm',
+      colors: 'renkler',
+      gear: 'vites',
+      fuel_type: 'yakit_tipi',
+      city: 'il',
+      status: 'arac_durumu',
+      damagestatus: 'boya_degi5Yen_parca',
+      severaldamaged: 'agir_hasar_kayitli',
+      sort: 'siralama',
+      swap: 'takasa_uygun',
+    }
+    for (const [en, tr] of Object.entries(map)) {
+      if (Object.prototype.hasOwnProperty.call(src, en) && !Object.prototype.hasOwnProperty.call(out, tr)) {
+        (out as any)[tr] = (src as any)[en]
+      }
+    }
+    // Dizi olması gerekenleri garanti altına al
+    const arrayKeys = ['ana_kategori','renkler','vites','yakit_tipi','il','boya_degi5Yen_parca','arac_durumu']
+    for (const k of arrayKeys) {
+      const v = (out as any)[k]
+      if (v != null && v !== '' && !Array.isArray(v)) (out as any)[k] = [v]
+    }
+    return out
+  }
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     onLoading(true)
     try {
       if (aiMode) {
+        // LLM çıktısını al ve Türkçe filtre anahtarlarına normalize et
         const parsedJson: unknown = await parseWithLocalModel(q)
-        const lockMarka = Boolean(parsed?.['_lock_marka'])
-        const lockModel = Boolean(parsed?.['_lock_model'])
-        const base: Parsed = parsedJson && typeof parsedJson === 'object' ? { ...(parsedJson as Parsed) } : {}
-        if (lockMarka) base.marka = parsed?.marka ?? base.marka
-        if (lockModel) base.model = parsed?.model ?? base.model
-        if (lockMarka) base._lock_marka = true
-        if (lockModel) base._lock_model = true
+        const base: Parsed = normalizeLLMToTurkish(parsedJson)
         onParsed?.(base)
-        const items = await scrapeSearch(base)
-        onResults(items)
+        const resp = await scrapeSearch(base)
+        onResults(resp.items)
+        if (resp.filters) onParsed?.({ ...base, ...(resp.filters as any) })
         onModelReady(true)
       } else {
         const next: Parsed = { ...(parsed || {}), searchText: q }
         onParsed?.(next)
-        const items = await scrapeSearch(next)
-        onResults(items)
+        const resp = await scrapeSearch(next)
+        onResults(resp.items)
+        if (resp.filters) onParsed?.({ ...next, ...(resp.filters as any) })
       }
     } finally {
       onLoading(false)

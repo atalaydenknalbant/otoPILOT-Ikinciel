@@ -26,6 +26,44 @@ type Props = {
 export default function ParsedChips({ parsed, loading, onChange, onApply }: Props) {
   // Option sources
   
+  // Kategori çıkarımı için lokal veri indeksini yükle (marka+model -> kategori[])
+  const [categoryIndex, setCategoryIndex] = useState<Map<string, Map<string, Set<string>>>>(new Map())
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch('/data/arabam_sequence_categories.json', { cache: 'force-cache' })
+        if (!res.ok) return
+        const json = await res.json()
+        const cars = json?.arabalar || {}
+        const idx = new Map<string, Map<string, Set<string>>>()
+        for (const [category, arr] of Object.entries(cars)) {
+          const list = Array.isArray(arr) ? (arr as any[]) : []
+          for (const item of list) {
+            const b = String(item?.marka ?? '')
+            if (!b) continue
+            const models: string[] = Array.isArray(item?.modeller) ? item.modeller : []
+            let modelMap = idx.get(b)
+            if (!modelMap) { modelMap = new Map(); idx.set(b, modelMap) }
+            for (const m of models) {
+              const k = String(m)
+              let s = modelMap.get(k)
+              if (!s) { s = new Set(); modelMap.set(k, s) }
+              s.add(String(category))
+            }
+          }
+        }
+        setCategoryIndex(idx)
+      } catch {}
+    }
+    load()
+  }, [])
+
+  const inferCategories = (brand?: string, model?: string): string[] => {
+    if (!brand || !model) return []
+    const m = categoryIndex.get(brand)
+    const set = m?.get(model)
+    return set ? Array.from(set.values()) : []
+  }
 
   const resetAll = () => {
     const empty: Parsed = {}
@@ -438,7 +476,16 @@ export default function ParsedChips({ parsed, loading, onChange, onApply }: Prop
           <button type="button" className="btn btn-ghost text-sm" onClick={resetAll}>Filtreleri Sıfırla</button>
           <button
             className="btn btn-gradient text-sm"
-            onClick={() => onApply?.(parsed)}
+            onClick={() => {
+              // Uygula'da marka+model dolu ise ana_kategori'yi otomatik düzelt
+              const next = { ...parsed }
+              const hasRent = Array.isArray((next as any).ana_kategori) && ((next as any).ana_kategori as string[]).includes('Kiralık Araçlar')
+              if (!hasRent && next.marka && next.model) {
+                const cats = inferCategories(next.marka, next.model)
+                if (cats.length) (next as any).ana_kategori = cats
+              }
+              onApply?.(next)
+            }}
           >Uygula</button>
         </div>
       </div>
