@@ -2,7 +2,7 @@
 FROM ollama/ollama:latest as ollama
 
 # Stage 2: Build the Node.js application
-FROM mcr.microsoft.com/playwright:v1.44.0-jammy
+FROM mcr.microsoft.com/playwright:v1.55.0-jammy
 
 WORKDIR /app
 
