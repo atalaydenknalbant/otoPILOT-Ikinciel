@@ -1,4 +1,4 @@
-import { CheerioCrawler, log } from 'crawlee';
+import { CheerioCrawler, log, RequestQueue } from 'crawlee';
 import { URLSearchParams } from 'url';
 
 export class ArabamScraper {
@@ -60,7 +60,11 @@ export class ArabamScraper {
         const startUrl = this._buildUrlWithFilters(userInput, category);
         const allScrapedData = [];
 
+        // Use a fresh RequestQueue per run to avoid cross-run deduplication
+        const requestQueue = await RequestQueue.open(`arabam-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+
         const crawler = new CheerioCrawler({
+            requestQueue,
             requestHandlerTimeoutSecs: 180,
             async requestHandler({ request, $, enqueueLinks, log }) {
                 const url = new URL(request.loadedUrl);
@@ -118,7 +122,9 @@ export class ArabamScraper {
             },
         });
 
-        await crawler.run([startUrl]);
+        // Seed the start URL into the fresh queue and run
+        await requestQueue.addRequest({ url: startUrl });
+        await crawler.run();
         return allScrapedData;
     }
 }

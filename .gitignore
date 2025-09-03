@@ -32,3 +32,4 @@ coverage/
 
 Backend/node_modules/
 Backend/storage/
+.vscode
