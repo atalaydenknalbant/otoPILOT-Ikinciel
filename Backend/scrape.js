@@ -3,6 +3,48 @@ import { URLSearchParams } from 'url';
 
 export class ArabamScraper {
 
+    _normalizeCityKey(name) {
+        const s = String(name || '').toLocaleLowerCase('tr');
+        return s
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/ı/g, 'i')
+            .replace(/ş/g, 's')
+            .replace(/ğ/g, 'g')
+            .replace(/ç/g, 'c')
+            .replace(/ö/g, 'o')
+            .replace(/ü/g, 'u')
+            .replace(/[^a-z0-9]/g, '');
+    }
+
+    _getCityCode(cityNameOrCode) {
+        // Accept numeric codes directly
+        if (cityNameOrCode == null) return null;
+        const str = String(cityNameOrCode).trim();
+        if (/^\d+$/.test(str)) {
+            const n = parseInt(str, 10);
+            if (n >= 1 && n <= 81) return String(n);
+        }
+
+        // Map Turkish city names to plate codes (1..81)
+        const map = {
+            adana: 1, adiyaman: 2, afyonkarahisar: 3, agri: 4, amasya: 5, ankara: 6, antalya: 7, artvin: 8, aydin: 9,
+            balikesir: 10, bilecik: 11, bingol: 12, bitlis: 13, bolu: 14, burdur: 15, bursa: 16,
+            canakkale: 17, cankiri: 18, corum: 19, denizli: 20, diyarbakir: 21, edirne: 22, elazig: 23, erzincan: 24,
+            erzurum: 25, eskisehir: 26, gaziantep: 27, giresun: 28, gumushane: 29, hakkari: 30, hatay: 31, isparta: 32,
+            mersin: 33, icel: 33, istanbul: 34, izmir: 35, kars: 36, kastamonu: 37, kayseri: 38, kirklareli: 39,
+            kirsehir: 40, kocaeli: 41, konya: 42, kutahya: 43, malatya: 44, manisa: 45, kahramanmaras: 46, mardin: 47,
+            mugla: 48, mus: 49, nevsehir: 50, nigde: 51, ordu: 52, rize: 53, sakarya: 54, samsun: 55, siirt: 56,
+            sinop: 57, sivas: 58, tekirdag: 59, tokat: 60, trabzon: 61, tunceli: 62, sanliurfa: 63, usak: 64, van: 65,
+            yozgat: 66, zonguldak: 67, aksaray: 68, bayburt: 69, karaman: 70, kirikkale: 71, batman: 72, sirnak: 73,
+            bartin: 74, ardahan: 75, igdir: 76, yalova: 77, karabuk: 78, kilis: 79, osmaniye: 80, duzce: 81,
+        };
+
+        const key = this._normalizeCityKey(str);
+        const code = map[key];
+        return code ? String(code) : null;
+    }
+
     _getCategorySlug(categoryName) {
         const slugMap = {
             "Otomobil": "otomobil",
@@ -16,7 +58,7 @@ export class ArabamScraper {
     _buildUrlWithFilters(userInput, category) {
         const { brand, model, minYear, maxYear, minPrice, maxPrice, minKm, maxKm, 
                 colors = [], gear = [], sort, status = [], severaldamaged, swap, 
-                damagestatus = [], searchText } = userInput;
+                damagestatus = [], searchText, city = [] } = userInput;
         
         const categorySlug = this._getCategorySlug(category);
         let baseUrl = `https://www.arabam.com/ikinci-el/${categorySlug}`;
@@ -50,7 +92,18 @@ export class ArabamScraper {
         colors.forEach(c => params.append('color', c));
         status.forEach(s => params.append('status', s));
         damagestatus.forEach(d => params.append('damagestatus', d));
-        
+
+        // Cities: accept names or numeric codes; append multiple as repeated 'city' params
+        if (Array.isArray(city)) {
+            for (const c of city) {
+                const code = this._getCityCode(c);
+                if (code) params.append('city', code);
+            }
+        } else if (city) {
+            const code = this._getCityCode(city);
+            if (code) params.append('city', code);
+        }
+
         const finalUrl = `${baseUrl}?${params.toString()}`;
         log.info(`Oluşturulan URL (${category}): ${finalUrl}`);
         return finalUrl;
