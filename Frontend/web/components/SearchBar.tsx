@@ -1,7 +1,7 @@
 "use client"
 import { useState } from 'react'
 import type React from 'react'
-import { parseWithLocalModel, scrapeSearch, cancelAllPending } from '../lib/api'
+import { parseWithLocalModel, scrapeSearch, beginNewRun, cancelRun, getRunId } from '../lib/api'
 import type { Parsed, SearchItem } from '../types'
 
 export default function SearchBar({
@@ -28,15 +28,12 @@ export default function SearchBar({
   onCancel: () => void
 }) {
   const [q, setQ] = useState(
-    `boyasız, 2020'den yeni, 3.000.000 TL altındaki maksimum 100000 km beyaz veya siyah renkli bmw 3 serisi otomatik vitesli arabaları bul., en yeni ilana göre sırala`
+    "boyasız, 2020'den yeni, 3.000.000 TL altındaki maksimum 100000 km beyaz veya siyah renkli bmw 3 serisi otomatik vitesli arabaları bul., en yeni ilana göre sırala"
   )
-  // Otomatik arama kaldırıldı. Artık sadece "Ara" tıklandığında işlem yapılacak.
 
-  // LLM dönüşünü sağlamlaştır: İngilizce anahtarları Türkçe alanlara dönüştür
   function normalizeLLMToTurkish(raw: unknown): Parsed {
     const src = (raw && typeof raw === 'object') ? (raw as Record<string, any>) : {}
     const out: Parsed = { ...(src as any) }
-
     const map: Record<string, string> = {
       main_category: 'ana_kategori',
       brand: 'marka',
@@ -52,7 +49,7 @@ export default function SearchBar({
       fuel_type: 'yakit_tipi',
       city: 'il',
       status: 'arac_durumu',
-      damagestatus: 'boya_degi5Yen_parca',
+      damagestatus: 'boya_degişen_parca',
       severaldamaged: 'agir_hasar_kayitli',
       sort: 'siralama',
       swap: 'takasa_uygun',
@@ -62,8 +59,7 @@ export default function SearchBar({
         (out as any)[tr] = (src as any)[en]
       }
     }
-    // Dizi olması gerekenleri garanti altına al
-    const arrayKeys = ['ana_kategori','renkler','vites','yakit_tipi','il','boya_degi5Yen_parca','arac_durumu']
+    const arrayKeys = ['ana_kategori','renkler','vites','yakit_tipi','il','boya_degişen_parca','arac_durumu']
     for (const k of arrayKeys) {
       const v = (out as any)[k]
       if (v != null && v !== '' && !Array.isArray(v)) (out as any)[k] = [v]
@@ -75,12 +71,14 @@ export default function SearchBar({
     e.preventDefault()
     onLoading(true)
     try {
+      const runId = beginNewRun()
       if (aiMode) {
-        // LLM çıktısını al ve Türkçe filtre anahtarlarına normalize et
         const parsedJson: unknown = await parseWithLocalModel(q)
+        if (getRunId() !== runId) return
         const base: Parsed = normalizeLLMToTurkish(parsedJson)
         onParsed?.(base)
         const resp = await scrapeSearch(base)
+        if (getRunId() !== runId) return
         onResults(resp.items)
         if (resp.filters) onParsed?.({ ...base, ...(resp.filters as any) })
         onModelReady(true)
@@ -88,6 +86,7 @@ export default function SearchBar({
         const next: Parsed = { ...(parsed || {}), searchText: q }
         onParsed?.(next)
         const resp = await scrapeSearch(next)
+        if (getRunId() !== runId) return
         onResults(resp.items)
         if (resp.filters) onParsed?.({ ...next, ...(resp.filters as any) })
       }
@@ -124,7 +123,6 @@ export default function SearchBar({
           </div>
         )}
       </div>
-      {/* Manual mode: no button here; search is triggered by ParsedChips "Uygula" */}
       {!aiMode ? (
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-xl shadow-sm">
@@ -142,7 +140,6 @@ export default function SearchBar({
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => {
-              // Enter'a basıldığında formun otomatik submit edilmesini engelle
               if (e.key === 'Enter') {
                 e.preventDefault()
                 e.stopPropagation()
@@ -157,7 +154,7 @@ export default function SearchBar({
               aria-label="Durdur"
               title="Durdur"
               className="btn btn-gradient w-10 h-10 p-0 flex items-center justify-center"
-              onClick={() => { try { cancelAllPending() } catch {}; onCancel() }}
+              onClick={() => { try { cancelRun() } catch {}; onCancel() }}
             >
               <span style={{ fontSize: 18 }}>⏹</span>
             </button>

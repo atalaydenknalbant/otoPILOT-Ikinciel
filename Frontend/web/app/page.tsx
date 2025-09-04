@@ -4,7 +4,7 @@ import ResultList from '../components/ResultList'
 import ModelStatus from '../components/ModelStatus'
 import { useEffect, useState } from 'react'
 import ParsedChips from '../components/ParsedChips'
-import { scrapeSearch, cancelAllPending } from '../lib/api'
+import { scrapeSearch, cancelAllPending, cancelRun, beginNewRun, getRunId } from '../lib/api'
 import { useMockModelLoader } from '../hooks/useMockModelLoader'
 import type { Parsed, SearchItem } from '../types'
 
@@ -28,7 +28,9 @@ export default function Page() {
     setParsed(next)
     setLoading(true)
     try {
+      const runId = beginNewRun()
       const resp = await scrapeSearch(next)
+      if (getRunId() !== runId) return
       setItems(resp.items)
       if (resp.filters) {
         setParsed(prev => ({ ...(prev || {}), ...(resp.filters as any) }))
@@ -50,7 +52,7 @@ export default function Page() {
         onModelReady={setModelReady}
         parsed={parsed}
         loading={loading}
-        onCancel={() => { cancelAllPending(); setLoading(false); setItems([]) }}
+        onCancel={() => { cancelRun(); setLoading(false); setItems([]) }}
       />
 
       <section className="mx-auto w-full max-w-[1400px] px-4 md:px-6 mt-6">
@@ -65,7 +67,7 @@ export default function Page() {
           loading={loading}
           onChange={setParsed}
           onApply={onApplyParsed}
-          onCancel={() => { cancelAllPending(); setLoading(false); setItems([]) }}
+          onCancel={() => { cancelRun(); setLoading(false); setItems([]) }}
         />
       </section>
 

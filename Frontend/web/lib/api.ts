@@ -6,12 +6,33 @@ const API_BASE = ''
 
 // Global cancellation management for in-flight requests (parse/scrape)
 const controllers: Set<AbortController> = new Set()
+let currentRunId: string | null = null
+
+export function beginNewRun() {
+  // Use simple unique id
+  currentRunId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+  return currentRunId
+}
+
+export function getRunId() { return currentRunId }
 
 export function cancelAllPending() {
   for (const c of Array.from(controllers)) {
     try { c.abort() } catch {}
     controllers.delete(c)
   }
+}
+
+export async function cancelRun() {
+  // Abort browser-side requests immediately
+  cancelAllPending()
+  // Inform backend to stop ongoing jobs (parse/scrape)
+  try {
+    if (currentRunId) {
+      await fetch(`/api/cancel`, { method: 'POST', headers: { 'x-run-id': currentRunId } })
+    }
+  } catch {}
+  currentRunId = null
 }
 
 function createTrackedController(): AbortController {
@@ -28,7 +49,7 @@ export async function parseWithLocalModel(query: string): Promise<ParsedFilters>
     const ac = createTrackedController()
     const res = await fetch(`${API_BASE}/api/parse`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(currentRunId ? { 'x-run-id': currentRunId } : {}) },
       body: JSON.stringify({ query }),
       signal: ac.signal,
     })
@@ -50,7 +71,7 @@ export async function scrapeSearch(filters: ParsedFilters): Promise<ScrapeRespon
     const ac = createTrackedController()
     const res = await fetch(`${API_BASE}/api/scrape`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(currentRunId ? { 'x-run-id': currentRunId } : {}) },
       body: JSON.stringify(filters),
       signal: ac.signal,
     })
@@ -90,4 +111,3 @@ export async function scrapeSearch(filters: ParsedFilters): Promise<ScrapeRespon
     },
   ] }
 }
-

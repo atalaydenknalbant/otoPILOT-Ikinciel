@@ -22,6 +22,9 @@ const carCategoriesFull = JSON.parse(
   await readFile(new URL('./arabam_sequence_categories_full_min.json', import.meta.url))
 );
 
+// In-flight runs for cancellation
+const RUNS = new Map(); // runId -> { activeScrape?: boolean, scrapeAc?: AbortController }
+
 // Sorting defaults
 const SIRALAMA_DEFAULTS = {
   'Fiyat - Ucuzdan Pahalıya': 'price.asc',
@@ -235,6 +238,7 @@ app.post('/scrape', async (req, res) => {
   // Abort only when client truly aborts the request stream
   req.on('aborted', () => { try { ac.abort(); } catch {} });
   log.info('Scrape isteği alındı (Turkish Keys):', req.body);
+  try { globalThis.__currentScrape = { runId: (req.headers["x-run-id"] || (req.get ? req.get("x-run-id") : undefined)), ac }; } catch {}
   try {
     let turkishJson = normalizeManualFilters(req.body || {});
 
@@ -298,6 +302,29 @@ app.post('/scrape', async (req, res) => {
   }
 });
 
+// Cancel endpoint: stop ongoing scrape/parse for a given run id (best-effort)
+app.post('/cancel', async (req, res) => {
+  try {
+    const runId = req.headers['x-run-id'] || req.body?.runId || (req.get ? req.get('x-run-id') : undefined);
+    let stopped = false;
+    try {
+      const cur = globalThis.__currentScrape;
+      if (cur && (!runId || cur.runId === runId)) {
+        try { cur.ac?.abort?.(); stopped = true; } catch {}
+      }
+    } catch {}
+    // Attempt to stop via registry map as well
+    try {
+      if (RUNS && runId && RUNS.has(runId)) {
+        const rec = RUNS.get(runId);
+        try { rec.scrapeAc?.abort?.(); stopped = true; } catch {}
+      }
+    } catch {}
+    res.json({ ok: true, stopped });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e?.message || e) });
+  }
+});
 app.listen(PORT, () => {
   log.info(`API sunucusu ${PORT} portunda dinliyor`);
 });
