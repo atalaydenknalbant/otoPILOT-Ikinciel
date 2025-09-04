@@ -500,12 +500,15 @@ export default function ParsedChips({ parsed, loading, onChange, onApply }: Prop
           {num('Max Fiyat', 'maxFiyat', 'Sayı')}
           {num('Min Km', 'minKm', 'Sayı')}
           {num('Max Km', 'maxKm', 'Sayı')}
-          <SingleSelectDropdown
-            label="İl"
-            value={parsed?.il as string | undefined}
-            options={sehirler}
-            onSelect={(val) => setField('il', val)}
-          />
+        </div>
+        <div className="flex gap-3 flex-wrap content-start">
+          <MultiSelectDropdown label="Ana Kategori" keyName="ana_kategori" options={ANA_KATEGORI} />
+          <MultiSelectDropdown label="Renkler" keyName="renkler" options={RENKLER} />
+          <MultiSelectDropdown label="Durum" keyName="arac_durumu" options={ARAC_DURUMU} />
+          <MultiSelectDropdown label="Boya/Değişen" keyName="boya_degişen_parca" options={BOYA_DEGISEN} />
+          <MultiSelectDropdown label="Vites" keyName="vites" options={VITES} />
+          <MultiSelectDropdown label="Yakıt Tipi" keyName="yakit_tipi" options={YAKIT_TIPLERI} />
+          {/* Move compact singles to the bottom of the right column to reduce overall height */}
           <SingleSelectDropdown
             label="Sıralama"
             value={SIRALAMA_REVERSE[parsed?.siralama ?? '']}
@@ -524,14 +527,12 @@ export default function ParsedChips({ parsed, loading, onChange, onApply }: Prop
             options={AGIR_HASAR}
             onSelect={(val) => setField('agir_hasar_kayitli', val)}
           />
-        </div>
-        <div className="flex gap-3 flex-wrap content-start">
-          <MultiSelectDropdown label="Ana Kategori" keyName="ana_kategori" options={ANA_KATEGORI} />
-          <MultiSelectDropdown label="Renkler" keyName="renkler" options={RENKLER} />
-          <MultiSelectDropdown label="Durum" keyName="arac_durumu" options={ARAC_DURUMU} />
-          <MultiSelectDropdown label="Boya/Değişen" keyName="boya_degişen_parca" options={BOYA_DEGISEN} />
-          <MultiSelectDropdown label="Vites" keyName="vites" options={VITES} />
-          <MultiSelectDropdown label="Yakıt Tipi" keyName="yakit_tipi" options={YAKIT_TIPLERI} />
+          <SingleSelectDropdown
+            label="İl"
+            value={parsed?.il as string | undefined}
+            options={sehirler}
+            onSelect={(val) => setField('il', val)}
+          />
         </div>
       </div>
 
