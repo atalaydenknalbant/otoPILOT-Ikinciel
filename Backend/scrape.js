@@ -109,22 +109,31 @@ export class ArabamScraper {
         return finalUrl;
     }
 
-    async scrape(userInput, category) {
+    async scrape(userInput, category, signal) {
         const startUrl = this._buildUrlWithFilters(userInput, category);
         const allScrapedData = [];
+
+        if (signal?.aborted) return allScrapedData;
 
         // Use a fresh RequestQueue per run to avoid cross-run deduplication
         const requestQueue = await RequestQueue.open(`arabam-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
-        const crawler = new CheerioCrawler({
+        let crawler;
+        const abortIfNeeded = () => {
+            try { if (signal?.aborted && crawler?.autoscaledPool) crawler.autoscaledPool.abort(); } catch {}
+        };
+        if (signal) signal.addEventListener('abort', abortIfNeeded, { once: true });
+
+        crawler = new CheerioCrawler({
             requestQueue,
             requestHandlerTimeoutSecs: 180,
             async requestHandler({ request, $, enqueueLinks, log }) {
+                if (signal?.aborted) return;
                 const url = new URL(request.loadedUrl);
                 
                 // --- DÜZELTME: Sayfalama (Pagination) mantığı geri eklendi ---
                 // Sadece ilk sayfadayken diğer sayfaları sıraya ekle
-                if (parseInt(url.searchParams.get('page') || '1', 10) === 1) {
+                if (!signal?.aborted && parseInt(url.searchParams.get('page') || '1', 10) === 1) {
                     try {
                         const totalPageText = $('#js-hook-for-total-page-count').text();
                         const lastPageNumber = parseInt(totalPageText, 10);
@@ -142,6 +151,7 @@ export class ArabamScraper {
                     }
                 }
 
+                if (signal?.aborted) return;
                 const carRows = $('tr.listing-list-item');
 
                 for (const row of carRows) {
@@ -162,6 +172,7 @@ export class ArabamScraper {
                         const date = rowElement.find('td.listing-text.tac').text();
                         const fullLocationText = rowElement.find('td:nth-of-type(9)').text();
                         const location = fullLocationText.split('Karşılaştır')[0].trim();
+                        if (signal?.aborted) return;
                         allScrapedData.push({ 
                             source: 'arabam.com', url: listingUrl, imageUrl: imageUrl?.trim(), 
                             model: model.trim(), title: title.trim(), year: year.trim(), 
@@ -176,8 +187,9 @@ export class ArabamScraper {
         });
 
         // Seed the start URL into the fresh queue and run
-        await requestQueue.addRequest({ url: startUrl });
-        await crawler.run();
+        if (!signal?.aborted) await requestQueue.addRequest({ url: startUrl });
+        if (!signal?.aborted) await crawler.run();
+        if (signal) try { signal.removeEventListener('abort', abortIfNeeded); } catch {}
         return allScrapedData;
     }
 }

@@ -12,6 +12,8 @@ export default function Header({
   modelReady,
   onModelReady,
   parsed,
+  loading,
+  onCancel,
 }: {
   aiMode: boolean
   onModeChange: (b: boolean) => void
@@ -21,6 +23,8 @@ export default function Header({
   modelReady: boolean
   onModelReady: (b: boolean) => void
   parsed?: Parsed
+  loading: boolean
+  onCancel: () => void
 }) {
   return (
     <header className="bg-white/70 backdrop-blur border-b border-gray-100">
@@ -38,6 +42,8 @@ export default function Header({
             modelReady={modelReady}
             onModelReady={onModelReady}
             parsed={parsed}
+            loading={loading}
+            onCancel={onCancel}
           />
         </div>
         <div className="hidden md:flex flex-none items-center gap-0 md:gap-1 ml-2 md:ml-3 mt-[25px] md:mt-[27px]">

@@ -8,6 +8,7 @@ export async function POST(req: Request) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
       cache: 'no-store',
+      signal: (req as any).signal,
     })
     const data = await res.json()
     return new Response(JSON.stringify(data), { status: res.status, headers: { 'Content-Type': 'application/json' } })

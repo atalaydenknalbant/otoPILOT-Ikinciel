@@ -21,9 +21,10 @@ type Props = {
   loading: boolean
   onChange?: (next: Parsed) => void
   onApply?: (next: Parsed) => void
+  onCancel?: () => void
 }
 
-export default function ParsedChips({ parsed, loading, onChange, onApply }: Props) {
+export default function ParsedChips({ parsed, loading, onChange, onApply, onCancel }: Props) {
   // Option sources
   
   // Kategori çıkarımı için lokal veri indeksini yükle (marka+model -> kategori[])
@@ -475,6 +476,7 @@ export default function ParsedChips({ parsed, loading, onChange, onApply }: Prop
           <span className="text-xs text-gray-500">{loading ? 'Yükleniyor…' : 'Hazır'}</span>
           <button type="button" className="btn btn-ghost text-sm" onClick={resetAll}>Filtreleri Sıfırla</button>
           <button
+            style={{ display: loading ? 'none' : undefined }}
             className="btn btn-gradient text-sm"
             onClick={() => {
               // Uygula'da marka+model dolu ise ana_kategori'yi otomatik düzelt
@@ -487,6 +489,17 @@ export default function ParsedChips({ parsed, loading, onChange, onApply }: Prop
               onApply?.(next)
             }}
           >Uygula</button>
+          {loading && (
+            <button
+              type="button"
+              aria-label="Durdur"
+              title="Durdur"
+              className="btn btn-gradient w-9 h-9 p-0 flex items-center justify-center"
+              onClick={() => onCancel?.()}
+            >
+              <span style={{ fontSize: 16 }}>⏹</span>
+            </button>
+          )}
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

@@ -1,7 +1,7 @@
 "use client"
 import { useState } from 'react'
 import type React from 'react'
-import { parseWithLocalModel, scrapeSearch } from '../lib/api'
+import { parseWithLocalModel, scrapeSearch, cancelAllPending } from '../lib/api'
 import type { Parsed, SearchItem } from '../types'
 
 export default function SearchBar({
@@ -13,6 +13,8 @@ export default function SearchBar({
   modelReady,
   onModelReady,
   parsed,
+  loading,
+  onCancel,
 }: {
   aiMode: boolean
   onModeChange: (b: boolean) => void
@@ -22,6 +24,8 @@ export default function SearchBar({
   modelReady: boolean
   onModelReady: (b: boolean) => void
   parsed?: Parsed
+  loading: boolean
+  onCancel: () => void
 }) {
   const [q, setQ] = useState(
     `boyasız, 2020'den yeni, 3.000.000 TL altındaki maksimum 100000 km beyaz veya siyah renkli bmw 3 serisi otomatik vitesli arabaları bul., en yeni ilana göre sırala`
@@ -147,7 +151,19 @@ export default function SearchBar({
             placeholder={'Örn: 2020+ dizel SUV 700k TL altı'}
             className="flex-1 bg-transparent outline-none py-2"
           />
-          <button className="btn btn-gradient" type="submit">Yapay Zeka ile Ara</button>
+          {loading ? (
+            <button
+              type="button"
+              aria-label="Durdur"
+              title="Durdur"
+              className="btn btn-gradient w-10 h-10 p-0 flex items-center justify-center"
+              onClick={() => { try { cancelAllPending() } catch {}; onCancel() }}
+            >
+              <span style={{ fontSize: 18 }}>⏹</span>
+            </button>
+          ) : (
+            <button className="btn btn-gradient" type="submit">Yapay Zeka ile Ara</button>
+          )}
         </form>
       )}
 

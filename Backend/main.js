@@ -231,6 +231,9 @@ app.post('/parse', async (req, res) => {
 
 // Scrape endpoint
 app.post('/scrape', async (req, res) => {
+  const ac = new AbortController();
+  // Abort only when client truly aborts the request stream
+  req.on('aborted', () => { try { ac.abort(); } catch {} });
   log.info('Scrape isteği alındı (Turkish Keys):', req.body);
   try {
     let turkishJson = normalizeManualFilters(req.body || {});
@@ -274,7 +277,7 @@ app.post('/scrape', async (req, res) => {
     const resultsPerCategory = await Promise.all(
       mainCategories.map((category) => {
         log.info(`Scraping category: ${category}`);
-        return scraper.scrape(englishKeysJson, category);
+        return scraper.scrape(englishKeysJson, category, ac.signal);
       })
     );
     const allResults = resultsPerCategory.flat();

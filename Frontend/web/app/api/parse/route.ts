@@ -9,6 +9,8 @@ export async function POST(req: Request) {
       body: JSON.stringify(body),
       // ensure server-side fetch, no CORS from browser
       cache: 'no-store',
+      // forward client aborts to backend fetch
+      signal: (req as any).signal,
     })
     const data = await res.json()
     return new Response(JSON.stringify(data), { status: res.status, headers: { 'Content-Type': 'application/json' } })
