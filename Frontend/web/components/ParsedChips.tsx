@@ -11,7 +11,7 @@ type Parsed = {
   marka?: string
   model?: string
   siralama?: string
-  il?: string
+  il?: string[]
   _lock_marka?: boolean
   _lock_model?: boolean
 }
@@ -29,6 +29,22 @@ export default function ParsedChips({ parsed, loading, onChange, onApply, onCanc
   
   // Kategori çıkarımı için lokal veri indeksini yükle (marka+model -> kategori[])
   const [categoryIndex, setCategoryIndex] = useState<Map<string, Map<string, Set<string>>>>(new Map())
+  // Cooldown for stop button inside filters panel
+  const [stopCooldown, setStopCooldown] = useState(false)
+  // Cooldown for Uygula button
+  const [applyCooldown, setApplyCooldown] = useState(false)
+
+  // Listen for a global cooldown trigger (e.g., cancel from SearchBar)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ms = (e as CustomEvent<number>).detail || 3000
+      setApplyCooldown(true)
+      setTimeout(() => setApplyCooldown(false), ms)
+    }
+    window.addEventListener('global-cooldown', handler as EventListener)
+    return () => window.removeEventListener('global-cooldown', handler as EventListener)
+  }, [])
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -297,11 +313,86 @@ export default function ParsedChips({ parsed, loading, onChange, onApply, onCanc
 
   // not: eskiden kullanılan datalist renderer kaldırıldı (kullanımı yok)
 
+  // City multi-select with chips and searchable dropdown
+  const CityMultiSelect = ({ label, keyName, options }: { label: string; keyName: string; options: string[] }) => {
+    const [open, setOpen] = useState(false)
+    const [q, setQ] = useState('')
+    const ref = useRef<HTMLDivElement | null>(null)
+    const menuRef = useRef<HTMLDivElement | null>(null)
+    useEffect(() => {
+      const onDoc = (e: MouseEvent) => {
+        if (!ref.current) return
+        const t = e.target as Node
+        if (!ref.current.contains(t) && !(menuRef.current && menuRef.current.contains(t))) setOpen(false)
+      }
+      document.addEventListener('mousedown', onDoc)
+      return () => document.removeEventListener('mousedown', onDoc)
+    }, [])
+    const selected: string[] = Array.isArray(parsed?.[keyName]) ? parsed[keyName] as string[] : []
+    const filtered = useMemo(() => {
+      const s = q.trim().toLocaleLowerCase('tr')
+      if (!s) return options
+      return options.filter(o => o.toLocaleLowerCase('tr').includes(s))
+    }, [options, q])
+    const renderMenu = () => {
+      if (!open || !ref.current) return null
+      const rect = ref.current.getBoundingClientRect()
+      const style: React.CSSProperties = {
+        position: 'absolute',
+        top: rect.bottom + window.scrollY + 8,
+        left: rect.left + window.scrollX,
+        width: 360,
+        maxHeight: '16rem',
+        overflow: 'auto',
+        zIndex: 9999,
+      }
+      return createPortal(
+        <div ref={menuRef} style={style} className="bg-white border border-gray-200 rounded-xl shadow-lg p-3">
+          <input className="w-full border border-gray-200 rounded-lg px-2 py-1 text-sm mb-2 outline-none" placeholder="Şehir ara..." value={q} onChange={(e)=> setQ(e.target.value)} />
+          <div className="grid grid-cols-1 gap-1">
+            {filtered.map((opt) => {
+              const checked = selected.includes(opt)
+              return (
+                <label key={opt} className="flex items-center gap-2 px-2 py-1 rounded text-sm hover:bg-gray-50 cursor-pointer">
+                  <input type="checkbox" className="accent-brand-600" checked={checked} onChange={() => toggleArrayItem(keyName, opt)} />
+                  <span>{opt}</span>
+                </label>
+              )
+            })}
+            {!filtered.length && <div className="text-xs text-gray-500 px-2 py-1">Sonuç yok.</div>}
+          </div>
+        </div>,
+        document.body
+      )
+    }
+
+    return (
+      <div className="relative" ref={ref}>
+        <div className="inline-flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-1.5 shadow-sm min-w-[260px]">
+          <span className="text-xs text-gray-600">{label}:</span>
+          <div className="flex items-center flex-wrap gap-1 max-w-[200px]">
+            {selected.map((city) => (
+              <span key={city} className="inline-flex items-center gap-1 bg-gray-100 text-gray-800 text-xs px-2 py-0.5 rounded-full">
+                {city}
+                <button type="button" className="text-gray-500 hover:text-gray-700" onClick={() => toggleArrayItem(keyName, city)}>×</button>
+              </span>
+            ))}
+            {!selected.length && <span className="text-gray-400 text-sm">Seçiniz</span>}
+          </div>
+          <button type="button" className="text-gray-400 ml-auto" onClick={() => setOpen(v=>!v)}>▾</button>
+        </div>
+        {renderMenu()}
+      </div>
+    )
+  }
+
   // Brand & Model pickers (searchable dropdowns with free typing)
   const [brandData, setBrandData] = useState<BrandModels[]>([])
   const [brandOpen, setBrandOpen] = useState(false)
   const [brandQuery, setBrandQuery] = useState('')
   const brandRef = useRef<HTMLDivElement | null>(null)
+  const brandMenuRef = useRef<HTMLDivElement | null>(null)
+  const brandSearchRef = useRef<HTMLInputElement | null>(null)
   useEffect(() => {
     loadBrandModels().then(setBrandData).catch(() => setBrandData([]))
   }, [])
@@ -316,15 +407,14 @@ export default function ParsedChips({ parsed, loading, onChange, onApply, onCanc
       onChange?.({ ...parsed, model: '', _lock_model: true })
     }
   }, [parsed, modelOptionsByBrand, onChange])
-  useEffect(() => {
-    const onDoc = (e: MouseEvent) => {
-      if (!brandRef.current) return
-      if (!brandRef.current.contains(e.target as Node)) setBrandOpen(false)
-    }
-    document.addEventListener('mousedown', onDoc)
-    return () => document.removeEventListener('mousedown', onDoc)
-  }, [])
+  // Not: Global outside click kaldırıldı; bunun yerine backdrop kullanıyoruz
   const brandList = useMemo(() => filterBrands(brandData, brandQuery).map(b => b.brand), [brandData, brandQuery])
+  useEffect(() => {
+    if (brandOpen) {
+      // Portal mount ve her query değişiminden sonra odakla (Chrome caret kaymasını önler)
+      requestAnimationFrame(() => brandSearchRef.current?.focus())
+    }
+  }, [brandOpen, brandQuery])
 
   const BrandDropdown = () => (
     <div className="relative" ref={brandRef}>
@@ -334,17 +424,11 @@ export default function ParsedChips({ parsed, loading, onChange, onApply, onCanc
           className="bg-transparent outline-none text-sm font-medium flex-1 placeholder:text-gray-400"
           placeholder="Örn: Renault"
           value={parsed?.marka ?? ''}
-          onChange={(e) => {
-            const nextVal = e.target.value
-            const prev = parsed?.marka ?? ''
-            setBrandQuery(nextVal)
-            if (nextVal !== prev) {
-              setFields({ marka: nextVal, model: '' })
-            } else {
-              setField('marka', nextVal)
-            }
-          }}
-          onFocus={() => { setBrandQuery(''); setBrandOpen(true) }}
+          readOnly
+          onFocus={() => { setBrandQuery(''); setBrandOpen(true); setTimeout(()=> brandSearchRef.current?.focus(), 0) }}
+          onClick={() => { setBrandQuery(''); setBrandOpen(true); setTimeout(()=> brandSearchRef.current?.focus(), 0) }}
+          onKeyDown={(e) => { e.preventDefault(); if (!brandOpen) setBrandOpen(true); setTimeout(()=> brandSearchRef.current?.focus(), 0) }}
+          onMouseDown={(e) => { if (brandOpen) { e.preventDefault(); brandSearchRef.current?.focus() } }}
         />
         <button
           type="button"
@@ -369,28 +453,53 @@ export default function ParsedChips({ parsed, loading, onChange, onApply, onCanc
           overflow: 'auto',
           zIndex: 9999,
         }
+        const stopAll = (e: React.SyntheticEvent) => { e.stopPropagation() }
         return (
-          <div style={style} className="bg-white border border-gray-200 rounded-xl shadow-lg p-2">
-            <input
-              className="w-full border border-gray-200 rounded-lg px-2 py-1 text-sm mb-2 outline-none"
-              placeholder="Marka ara..."
-              value={brandQuery}
-              onChange={(e)=> setBrandQuery(e.target.value)}
-            />
-            <div className="grid grid-cols-1">
-              {brandList.map((name) => (
-                <button
-                  key={name}
-                  type="button"
-                  className="text-left px-2 py-1 rounded hover:bg-gray-50 text-sm"
-                  onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); setFields({ marka: name, model: '' }); setBrandOpen(false) }}
-                >{name}</button>
-              ))}
-              {!brandList.length && (
-                <div className="text-xs text-gray-500 px-2 py-1">Sonuç yok.</div>
-              )}
+          <>
+            <div className="fixed inset-0 z-[9998]" onMouseDown={() => setBrandOpen(false)} />
+            <div
+              ref={brandMenuRef}
+              style={style}
+              className="bg-white border border-gray-200 rounded-xl shadow-lg p-2"
+              onMouseDown={stopAll}
+              onMouseUp={stopAll}
+              onClick={stopAll}
+              tabIndex={-1}
+              onFocusCapture={() => setBrandOpen(true)}
+            >
+              <input
+                className="w-full border border-gray-200 rounded-lg px-2 py-1 text-sm mb-2 outline-none"
+                placeholder="Marka ara..."
+                value={brandQuery}
+                onChange={(e)=> { setBrandQuery(e.target.value) }}
+                onClick={stopAll}
+                onFocus={() => setBrandOpen(true)}
+                ref={brandSearchRef}
+                onBlur={(e)=> {
+                  // Menü açıksa ve blur menü içinde olduysa tekrar odakla
+                  const next = e.relatedTarget as Element | null
+                  const inMenu = next && brandMenuRef.current ? brandMenuRef.current.contains(next) : false
+                  if (brandOpen && inMenu) {
+                    setTimeout(()=> brandSearchRef.current?.focus(), 0)
+                  }
+                }}
+                autoFocus
+              />
+              <div className="grid grid-cols-1">
+                {brandList.map((name) => (
+                  <button
+                    key={name}
+                    type="button"
+                    className="text-left px-2 py-1 rounded hover:bg-gray-50 text-sm"
+                    onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); setFields({ marka: name, model: '' }); setBrandOpen(false) }}
+                  >{name}</button>
+                ))}
+                {!brandList.length && (
+                  <div className="text-xs text-gray-500 px-2 py-1">Sonuç yok.</div>
+                )}
+              </div>
             </div>
-          </div>
+          </>
         )
       })(), document.body)}
     </div>
@@ -399,20 +508,20 @@ export default function ParsedChips({ parsed, loading, onChange, onApply, onCanc
   const [modelOpen, setModelOpen] = useState(false)
   const [modelQuery, setModelQuery] = useState('')
   const modelRef = useRef<HTMLDivElement | null>(null)
-  useEffect(() => {
-    const onDoc = (e: MouseEvent) => {
-      if (!modelRef.current) return
-      if (!modelRef.current.contains(e.target as Node)) setModelOpen(false)
-    }
-    document.addEventListener('mousedown', onDoc)
-    return () => document.removeEventListener('mousedown', onDoc)
-  }, [])
+  const modelMenuRef = useRef<HTMLDivElement | null>(null)
+  const modelSearchRef = useRef<HTMLInputElement | null>(null)
+  // Model dropdown için de backdrop yaklaşımı
   const modelOptions = useMemo(() => getModelsForBrand(brandData, parsed?.marka), [brandData, parsed?.marka])
   const filteredModels = useMemo(() => {
     const s = modelQuery.trim().toLocaleLowerCase('tr')
     if (!s) return modelOptions
     return modelOptions.filter(m => m.toLocaleLowerCase('tr').includes(s))
   }, [modelOptions, modelQuery])
+  useEffect(() => {
+    if (modelOpen) {
+      requestAnimationFrame(() => modelSearchRef.current?.focus())
+    }
+  }, [modelOpen, modelQuery])
 
   const ModelDropdown = () => (
     <div className="relative" ref={modelRef}>
@@ -422,8 +531,10 @@ export default function ParsedChips({ parsed, loading, onChange, onApply, onCanc
           className="bg-transparent outline-none text-sm font-medium flex-1 placeholder:text-gray-400"
           placeholder="Örn: Megane"
           value={parsed?.model ?? ''}
-          onChange={(e) => { setField('model', e.target.value); setModelQuery(e.target.value) }}
-          onFocus={() => setModelOpen(true)}
+          readOnly
+          onFocus={() => { setModelOpen(true); setTimeout(()=> modelSearchRef.current?.focus(), 0) }}
+          onClick={() => { setModelOpen(true); setTimeout(()=> modelSearchRef.current?.focus(), 0) }}
+          onMouseDown={(e) => { if (modelOpen) { e.preventDefault(); modelSearchRef.current?.focus() } }}
         />
         <button type="button" className="text-gray-400" onClick={() => setModelOpen(v=>!v)}>▾</button>
       </div>
@@ -438,28 +549,49 @@ export default function ParsedChips({ parsed, loading, onChange, onApply, onCanc
           overflow: 'auto',
           zIndex: 9999,
         }
+        const stopAll = (e: React.SyntheticEvent) => { e.stopPropagation() }
         return (
-          <div style={style} className="bg-white border border-gray-200 rounded-xl shadow-lg p-2">
-            <input
-              className="w-full border border-gray-200 rounded-lg px-2 py-1 text-sm mb-2 outline-none"
-              placeholder="Model ara..."
-              value={modelQuery}
-              onChange={(e)=> setModelQuery(e.target.value)}
-            />
-            <div className="grid grid-cols-1">
-              {filteredModels.map((name) => (
-                <button
-                  key={name}
-                  type="button"
-                  className="text-left px-2 py-1 rounded hover:bg-gray-50 text-sm"
-                  onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); setField('model', name); setModelOpen(false) }}
-                >{name}</button>
-              ))}
-              {!filteredModels.length && (
-                <div className="text-xs text-gray-500 px-2 py-1">Sonuç yok.</div>
-              )}
+          <>
+            <div className="fixed inset-0 z-[9998]" onMouseDown={() => setModelOpen(false)} />
+            <div
+              ref={modelMenuRef}
+              style={style}
+              className="bg-white border border-gray-200 rounded-xl shadow-lg p-2"
+              onMouseDown={stopAll}
+              onMouseUp={stopAll}
+              onClick={stopAll}
+            >
+              <input
+                className="w-full border border-gray-200 rounded-lg px-2 py-1 text-sm mb-2 outline-none"
+                placeholder="Model ara..."
+                value={modelQuery}
+                onChange={(e)=> { setModelQuery(e.target.value) }}
+                onClick={stopAll}
+                ref={modelSearchRef}
+                onBlur={(e)=> {
+                  const next = e.relatedTarget as Element | null
+                  const inMenu = next && modelMenuRef.current ? modelMenuRef.current.contains(next) : false
+                  if (modelOpen && inMenu) {
+                    setTimeout(()=> modelSearchRef.current?.focus(), 0)
+                  }
+                }}
+                autoFocus
+              />
+              <div className="grid grid-cols-1">
+                {filteredModels.map((name) => (
+                  <button
+                    key={name}
+                    type="button"
+                    className="text-left px-2 py-1 rounded hover:bg-gray-50 text-sm"
+                    onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); setField('model', name); setModelOpen(false) }}
+                  >{name}</button>
+                ))}
+                {!filteredModels.length && (
+                  <div className="text-xs text-gray-500 px-2 py-1">Sonuç yok.</div>
+                )}
+              </div>
             </div>
-          </div>
+          </>
         )
       })(), document.body)}
     </div>
@@ -477,8 +609,12 @@ export default function ParsedChips({ parsed, loading, onChange, onApply, onCanc
           <button type="button" className="btn btn-ghost text-sm" onClick={resetAll}>Filtreleri Sıfırla</button>
           <button
             style={{ display: loading ? 'none' : undefined }}
-            className="btn btn-gradient text-sm"
+            className={`btn btn-gradient text-sm ${applyCooldown ? 'opacity-60 cursor-not-allowed pointer-events-none' : ''}`}
+            disabled={applyCooldown}
+            title={applyCooldown ? 'Bekleyin…' : 'Uygula'}
             onClick={() => {
+              if (applyCooldown) return
+              setApplyCooldown(true)
               // Uygula'da marka+model dolu ise ana_kategori'yi otomatik düzelt
               const next = { ...parsed }
               const hasRent = Array.isArray((next as any).ana_kategori) && ((next as any).ana_kategori as string[]).includes('Kiralık Araçlar')
@@ -487,15 +623,28 @@ export default function ParsedChips({ parsed, loading, onChange, onApply, onCanc
                 if (cats.length) (next as any).ana_kategori = cats
               }
               onApply?.(next)
+              setTimeout(() => setApplyCooldown(false), 3000)
             }}
           >Uygula</button>
           {loading && (
             <button
               type="button"
               aria-label="Durdur"
-              title="Durdur"
-              className="btn btn-gradient w-9 h-9 p-0 flex items-center justify-center"
-              onClick={() => onCancel?.()}
+              title={stopCooldown ? 'Bekleyin…' : 'Durdur'}
+              className={`btn btn-gradient w-9 h-9 p-0 flex items-center justify-center ${stopCooldown ? 'opacity-60 cursor-not-allowed pointer-events-none' : ''}`}
+              disabled={stopCooldown}
+              onClick={() => {
+                if (stopCooldown) return
+                setStopCooldown(true)
+                // Uygula butonunu da 3 saniye kilitle
+                setApplyCooldown(true)
+                onCancel?.()
+                const ms = 3000
+                // Broadcast to sync cooldown with other components
+                try { window.dispatchEvent(new CustomEvent('global-cooldown', { detail: ms })) } catch {}
+                setTimeout(() => setStopCooldown(false), ms)
+                setTimeout(() => setApplyCooldown(false), ms)
+              }}
             >
               <span style={{ fontSize: 16 }}>⏹</span>
             </button>
@@ -540,12 +689,7 @@ export default function ParsedChips({ parsed, loading, onChange, onApply, onCanc
             options={AGIR_HASAR}
             onSelect={(val) => setField('agir_hasar_kayitli', val)}
           />
-          <SingleSelectDropdown
-            label="İl"
-            value={parsed?.il as string | undefined}
-            options={sehirler}
-            onSelect={(val) => setField('il', val)}
-          />
+          <CityMultiSelect label="İl" keyName="il" options={sehirler} />
         </div>
       </div>
 

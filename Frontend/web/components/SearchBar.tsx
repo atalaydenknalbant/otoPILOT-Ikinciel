@@ -1,5 +1,5 @@
 "use client"
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type React from 'react'
 import { parseWithLocalModel, scrapeSearch, beginNewRun, cancelRun, getRunId } from '../lib/api'
 import type { Parsed, SearchItem } from '../types'
@@ -30,6 +30,19 @@ export default function SearchBar({
   const [q, setQ] = useState(
     "boyasız, 2020'den yeni, 3.000.000 TL altındaki maksimum 100000 km beyaz veya siyah renkli bmw 3 serisi otomatik vitesli arabaları bul., en yeni ilana göre sırala"
   )
+  const [stopCooldown, setStopCooldown] = useState(false)
+  const [submitCooldown, setSubmitCooldown] = useState(false)
+
+  // Listen for a global cooldown trigger (e.g., cancel from filters panel)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ms = (e as CustomEvent<number>).detail || 3000
+      setSubmitCooldown(true)
+      setTimeout(() => setSubmitCooldown(false), ms)
+    }
+    window.addEventListener('global-cooldown', handler as EventListener)
+    return () => window.removeEventListener('global-cooldown', handler as EventListener)
+  }, [])
 
   function normalizeLLMToTurkish(raw: unknown): Parsed {
     const src = (raw && typeof raw === 'object') ? (raw as Record<string, any>) : {}
@@ -69,6 +82,9 @@ export default function SearchBar({
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (submitCooldown) return
+    setSubmitCooldown(true)
+    setTimeout(() => setSubmitCooldown(false), 3000)
     onLoading(true)
     try {
       const runId = beginNewRun()
@@ -152,14 +168,34 @@ export default function SearchBar({
             <button
               type="button"
               aria-label="Durdur"
-              title="Durdur"
-              className="btn btn-gradient w-10 h-10 p-0 flex items-center justify-center"
-              onClick={() => { try { cancelRun() } catch {}; onCancel() }}
+              title={stopCooldown ? 'Bekleyin…' : 'Durdur'}
+              className={`btn btn-gradient w-10 h-10 p-0 flex items-center justify-center ${stopCooldown ? 'opacity-60 cursor-not-allowed pointer-events-none' : ''}`}
+              disabled={stopCooldown}
+              onClick={() => {
+                if (stopCooldown) return
+                setStopCooldown(true)
+                try { cancelRun() } catch {}
+                onCancel()
+                // Also start submit cooldown so the submit button is disabled right after cancel
+                setSubmitCooldown(true)
+                const ms = 3000
+                // Broadcast to sync cooldown with other components
+                try { window.dispatchEvent(new CustomEvent('global-cooldown', { detail: ms })) } catch {}
+                setTimeout(() => setStopCooldown(false), ms)
+                setTimeout(() => setSubmitCooldown(false), ms)
+              }}
             >
               <span style={{ fontSize: 18 }}>⏹</span>
             </button>
           ) : (
-            <button className="btn btn-gradient" type="submit">Yapay Zeka ile Ara</button>
+            <button
+              className={`btn btn-gradient ${submitCooldown ? 'opacity-60 cursor-not-allowed pointer-events-none' : ''}`}
+              type="submit"
+              disabled={submitCooldown}
+              title={submitCooldown ? 'Bekleyin…' : 'Yapay Zeka ile Ara'}
+            >
+              Yapay Zeka ile Ara
+            </button>
           )}
         </form>
       )}

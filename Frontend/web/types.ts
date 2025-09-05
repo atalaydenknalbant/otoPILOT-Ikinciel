@@ -16,7 +16,7 @@ export type Parsed = {
   marka?: string
   model?: string
   siralama?: string
-  il?: string
+  il?: string[]
   _lock_marka?: boolean
   _lock_model?: boolean
   ana_kategori?: string[]
