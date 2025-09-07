@@ -35,21 +35,41 @@ export class FavoriteScraper {
                                      $('[class*="price"]').first().text().trim() ||
                                      'Fiyat bilgisi yok';
                         
-                        // Resim URL'si çekme - ana scrape.js mantığı
-                        // Ana scrape.js: const imageElement = rowElement.find('td:nth-child(1) img');
-                        // const imageUrl = imageElement.attr('data-src') || imageElement.attr('src');
-                        
-                        // İlan detay sayfasında ilk resmi bul
-                        const imageElement = $('img').first();
-                        let imageUrl = imageElement.attr('data-src') || imageElement.attr('src') || '';
-                        
-                        // Eğer bulunamadıysa, sayfadaki tüm resimleri kontrol et
+                        // İlan detayındaki doğru görseli seç
+                        const preferredSelectors = [
+                            '#slider .swiper-wrapper .swiper-slide.swiper-slide-active img',
+                            '#slider .swiper-wrapper .swiper-slide[data-swiper-slide-index="0"] img',
+                            '#slider img.swiper-main-img',
+                            'img.swiper-main-img',
+                            '#slider img[data-src*="ilanfotograflari"]',
+                            '#slider img[src*="ilanfotograflari"]',
+                        ];
+
+                        const pickSrc = (el) => (el?.attr('data-src') || el?.attr('src') || '').trim();
+
+                        let imageUrl = '';
+                        for (const selector of preferredSelectors) {
+                            const el = $(selector).first();
+                            const src = pickSrc(el);
+                            if (src) { imageUrl = src; break; }
+                        }
+
+                        // Fallback 1: Open Graph görseli
                         if (!imageUrl) {
-                            $('img').each(function() {
-                                const src = $(this).attr('data-src') || $(this).attr('src') || '';
-                                if (src && src.includes('arbstorage.mncdn.com')) {
+                            const og = $('meta[property="og:image"]').attr('content');
+                            if (og) imageUrl = og.trim();
+                        }
+
+                        // Fallback 2: Depolama alanından gelen ilk uygun görsel
+                        if (!imageUrl) {
+                            $('img').each((_, img) => {
+                                const $img = $(img);
+                                const altText = ($img.attr('alt') || '').toLocaleLowerCase('tr');
+                                const src = ($img.attr('data-src') || $img.attr('src') || '').trim();
+                                const isLogo = /logo/.test(altText) || /logo/i.test(src);
+                                const isListingImg = /arbstorage\.(mncdn|mmcdn)\.com/.test(src) || /ilanfotograflari/.test(src);
+                                if (!isLogo && isListingImg && src && !imageUrl) {
                                     imageUrl = src;
-                                    return false; // break
                                 }
                             });
                         }
