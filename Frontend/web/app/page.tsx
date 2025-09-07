@@ -4,7 +4,7 @@ import ResultList from '../components/ResultList'
 import ModelStatus from '../components/ModelStatus'
 import { useEffect, useState } from 'react'
 import ParsedChips from '../components/ParsedChips'
-import { scrapeSearch, cancelAllPending, cancelRun, beginNewRun, getRunId } from '../lib/api'
+import { scrapeSearch, cancelRun, beginNewRun, getRunId } from '../lib/api'
 import { useMockModelLoader } from '../hooks/useMockModelLoader'
 import type { Parsed, SearchItem } from '../types'
 
@@ -33,7 +33,7 @@ export default function Page() {
       if (getRunId() !== runId) return
       setItems(resp.items)
       if (resp.filters) {
-        setParsed(prev => ({ ...(prev || {}), ...(resp.filters as any) }))
+        setParsed(prev => ({ ...(prev || {}), ...(resp.filters as Parsed) }))
       }
     } finally {
       setLoading(false)

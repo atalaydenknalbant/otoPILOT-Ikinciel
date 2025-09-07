@@ -14,7 +14,7 @@ export type CarItem = {
   year?: number | string
   km?: number | string
   location?: string
-  price?: string
+  price?: string | number
   date?: string
   source?: string
 }
