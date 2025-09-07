@@ -1,4 +1,5 @@
 import type { SearchItem } from '../types'
+import HeartButton from './HeartButton'
 
 export default function CarCard({ item }: { item: SearchItem }) {
   const {
@@ -15,14 +16,17 @@ export default function CarCard({ item }: { item: SearchItem }) {
   } = item || {}
 
   return (
-    <article className="card overflow-hidden">
+    <article className="card overflow-hidden relative">
       {imageUrl ? (
         <div className="relative h-44 w-full">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={imageUrl} alt={title || model || 'car'} className="object-cover w-full h-full" />
+          <HeartButton car={item} />
         </div>
       ) : (
-        <div className="h-44 bg-gray-100" />
+        <div className="h-44 bg-gray-100 relative">
+          <HeartButton car={item} />
+        </div>
       )}
       <div className="p-4">
         <a href={url || '#'} target="_blank" rel="noreferrer" className="font-semibold hover:underline line-clamp-2">

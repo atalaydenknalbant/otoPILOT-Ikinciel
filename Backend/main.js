@@ -3,6 +3,7 @@ import { Ollama } from 'ollama';
 import { readFile } from 'fs/promises';
 import { log } from 'crawlee';
 import { ArabamScraper } from './scrape.js';
+import { FavoriteScraper } from './favorite.js';
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -10,7 +11,7 @@ app.use(express.json({ limit: '150mb' }));
 
 // Ollama configuration 
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'tykefencer/otomodel_v1.2_q8';
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'tykefencer/otomodel_v1.2_q4';
 const ollama = new Ollama({ host: OLLAMA_URL });
 
 // Load categories JSON (UI options)
@@ -219,7 +220,7 @@ app.post('/parse', async (req, res) => {
         { role: 'user', content: query },
       ],
       format: 'json',
-      options: { temperature: 0, top_p: 1.0, num_ctx: 16000, seed: 1 },
+      options: { temperature: 0, top_p: 1.0, num_ctx: 2048, seed: 1 },
       stream: false,
     });
     const obj = JSON.parse(response.message.content);
@@ -325,6 +326,29 @@ app.post('/cancel', async (req, res) => {
     res.status(500).json({ ok: false, error: String(e?.message || e) });
   }
 });
+// Favori araçları scrape etme endpoint'i
+app.post('/scrape-favorites', async (req, res) => {
+  try {
+    const { urls } = req.body;
+    
+    if (!urls || !Array.isArray(urls) || urls.length === 0) {
+      return res.status(400).json({ error: 'Geçerli URL listesi gerekli' });
+    }
+
+    log.info(`Favori scraping başlatıldı: ${urls.length} URL`);
+    
+    const favoriteScraper = new FavoriteScraper();
+    const cars = await favoriteScraper.scrapeFavorites(urls);
+    
+    log.info(`Favori scraping tamamlandı: ${cars.length} araç bulundu`);
+    
+    res.json({ cars });
+  } catch (error) {
+    log.error(`Favori scraping hatası: ${error.message}`);
+    res.status(500).json({ error: 'Favori verileri çekilemedi' });
+  }
+});
+
 app.listen(PORT, () => {
   log.info(`API sunucusu ${PORT} portunda dinliyor`);
 });
