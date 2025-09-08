@@ -4,15 +4,48 @@ import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useFavorites } from '../../contexts/FavoritesContext'
 import CarCard from '../../components/CarCard'
-import type { CarItem } from '../../lib/types'
+import Header from '../../components/Header'
+import IconsRow from '../../components/IconsRow'
+import type { CarItem, SearchItem, Parsed } from '../../lib/types'
 import { getCachedFavorites, setCachedFavorites, getLastUpdated, clearCachedFavorites } from '../../lib/cache'
 
 export default function FavoritesPage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, logout, deleteAccount } = useAuth()
   const { favorites, loading: favoritesLoading } = useFavorites()
   const [scrapedCars, setScrapedCars] = useState<CarItem[]>([])
   const [scraping, setScraping] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
+  
+  // Header için gerekli state'ler
+  const [aiMode, setAiMode] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [items, setItems] = useState<SearchItem[]>([])
+  const [parsed, setParsed] = useState<Parsed>({
+    ana_kategori: [],
+    renkler: [],
+    vites: [],
+    arac_durumu: [],
+    boya_degişen_parca: [],
+  })
+  const [modelReady, setModelReady] = useState(false)
+
+  // Header için gerekli fonksiyonlar
+  const handleModeChange = (newAiMode: boolean) => {
+    setAiMode(newAiMode)
+  }
+
+  const handleResults = (newItems: SearchItem[]) => {
+    setItems(newItems)
+  }
+
+  const handleParsed = (newParsed: Parsed) => {
+    setParsed(newParsed)
+  }
+
+  const handleCancel = () => {
+    setLoading(false)
+    setItems([])
+  }
 
   // Cache'den veri yükleme
   const loadFromCache = useCallback(() => {
@@ -124,11 +157,27 @@ export default function FavoritesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Header - Ana sayfadaki ile aynı */}
+      <Header
+        aiMode={aiMode}
+        onModeChange={handleModeChange}
+        onResults={handleResults}
+        onLoading={setLoading}
+        onParsed={handleParsed}
+        modelReady={modelReady}
+        onModelReady={setModelReady}
+        parsed={parsed}
+        loading={loading}
+        onCancel={handleCancel}
+        currentPage="favorites"
+        hideSearch={true}
+      />
+
       <div className="container mx-auto px-4 py-8">
+        {/* Butonlar - En üstte */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Favori Araçlarım</h1>
-            <p className="text-gray-600 mt-2">
+            <p className="text-gray-600">
               {favorites.length} favori araç • {scrapedCars.length} güncel veri
             </p>
           </div>
@@ -156,7 +205,7 @@ export default function FavoritesPage() {
                 }}
                 className="btn btn-outline text-red-600 border-red-600 hover:bg-red-50"
               >
-                Cache Temizle
+                Önbellek Temizle
               </button>
             </div>
             {lastUpdated && (

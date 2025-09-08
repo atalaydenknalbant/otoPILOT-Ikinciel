@@ -95,16 +95,27 @@ export default function SearchBar({
         onParsed?.(base)
         const resp = await scrapeSearch(base)
         if (getRunId() !== runId) return
-        onResults(resp.items)
-        if (resp.filters) onParsed?.({ ...base, ...(resp.filters as any) })
+        if (resp.filters) {
+          const finalParsed = { ...base, ...(resp.filters as any) }
+          onParsed?.(finalParsed)
+          // Filtreler güncellendikten sonra cache'e kaydet
+          onResults(resp.items, finalParsed)
+        } else {
+          onResults(resp.items, base)
+        }
         onModelReady(true)
       } else {
         const next: Parsed = { ...(parsed || {}), searchText: q }
         onParsed?.(next)
         const resp = await scrapeSearch(next)
         if (getRunId() !== runId) return
-        onResults(resp.items)
-        if (resp.filters) onParsed?.({ ...next, ...(resp.filters as any) })
+        if (resp.filters) {
+          const finalParsed = { ...next, ...(resp.filters as any) }
+          onParsed?.(finalParsed)
+          onResults(resp.items, finalParsed)
+        } else {
+          onResults(resp.items, next)
+        }
       }
     } finally {
       onLoading(false)

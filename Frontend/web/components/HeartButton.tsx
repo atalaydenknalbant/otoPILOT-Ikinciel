@@ -16,7 +16,6 @@ export default function HeartButton({ car, className = '' }: HeartButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
 
   const isFav = isFavorite(car.url || '')
-  const [localIsFav, setLocalIsFav] = useState(isFav)
 
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -34,26 +33,17 @@ export default function HeartButton({ car, className = '' }: HeartButtonProps) {
 
     setIsLoading(true)
     try {
-      if (localIsFav) {
+      if (isFav) {
         // Favori listesinden kaldır
-        // const favoriteCar = { url: car.url, title: car.title || '', imageUrl: car.imageUrl, price: car.price }
         await removeFromFavorites(car.url)
-        setLocalIsFav(false)
       } else {
         // Favori listesine ekle
-        // const favoriteCar = {
-        //   url: car.url,
-        //   title: car.title || '',
-        //   imageUrl: car.imageUrl,
-        //   price: car.price
-        // }
         await addToFavorites({
           url: car.url,
           title: car.title || '',
           imageUrl: car.imageUrl,
           price: car.price?.toString()
         })
-        setLocalIsFav(true)
       }
     } catch (error) {
       console.error('Favori işlemi sırasında hata:', error)
@@ -74,20 +64,20 @@ export default function HeartButton({ car, className = '' }: HeartButtonProps) {
         hover:scale-110 
         disabled:opacity-50 
         disabled:cursor-not-allowed
-        ${localIsFav 
+        ${isFav 
           ? 'bg-red-500 text-white shadow-lg' 
           : 'bg-white/80 text-gray-600 hover:bg-red-50 hover:text-red-500'
         }
         ${className}
       `}
-      title={localIsFav ? 'Favorilerden kaldır' : 'Favorilere ekle'}
+      title={isFav ? 'Favorilerden kaldır' : 'Favorilere ekle'}
     >
       {isLoading ? (
         <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
       ) : (
         <svg 
           className="w-4 h-4" 
-          fill={localIsFav ? 'currentColor' : 'none'} 
+          fill={isFav ? 'currentColor' : 'none'} 
           stroke="currentColor" 
           viewBox="0 0 24 24"
         >

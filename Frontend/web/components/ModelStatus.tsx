@@ -1,6 +1,13 @@
 "use client"
 
-export default function ModelStatus({ modelReady, progress }: { modelReady: boolean; progress?: number | null }) {
+interface ModelStatusProps {
+  modelReady: boolean
+  progress?: number | null
+  lastSearchTime?: string | null
+  onClearCache?: () => void
+}
+
+export default function ModelStatus({ modelReady, progress, lastSearchTime, onClearCache }: ModelStatusProps) {
   if (!modelReady) {
     return (
       <div className="card p-3 flex items-center gap-3">
@@ -10,6 +17,25 @@ export default function ModelStatus({ modelReady, progress }: { modelReady: bool
     )
   }
 
-  // Model hazır: hiçbir şey gösterme
+  // Model hazır ve cache varsa cache bilgisini göster
+  if (lastSearchTime) {
+    return (
+      <div className="card p-3 flex items-center justify-between">
+        <div className="text-sm text-gray-600">
+          Son arama: {lastSearchTime}
+        </div>
+        {onClearCache && (
+          <button
+            onClick={onClearCache}
+            className="text-sm text-red-600 hover:text-red-800 underline"
+          >
+            Arama Sonucunu Temizle
+          </button>
+        )}
+      </div>
+    )
+  }
+
+  // Model hazır ama cache yok: hiçbir şey gösterme
   return null
 }

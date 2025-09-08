@@ -41,11 +41,7 @@ export default function IconsRow() {
       {logos.map((slug) => (
         <BrandLogo key={slug} slug={slug} />
       ))}
-      {/* duplicate for seamless loop */}
-      {logos.map((slug, i) => (
-        <BrandLogo key={`${slug}-dup-${i}`} slug={slug} />
-      ))}
     </div>
   )
-  return <div className="marquee">{track}</div>
+  return <div className="marquee relative z-0">{track}</div>
 }
