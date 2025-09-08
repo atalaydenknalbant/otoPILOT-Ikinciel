@@ -11,9 +11,13 @@ import {
   onAuthStateChanged,
   sendEmailVerification as firebaseSendEmailVerification,
   sendPasswordResetEmail,
-  updateProfile
+  updateProfile,
+  deleteUser,
+  reauthenticateWithCredential,
+  EmailAuthProvider
 } from 'firebase/auth'
-import { auth } from '../lib/firebase'
+import { auth, db } from '../lib/firebase'
+import { collection, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore'
 
 interface AuthContextType {
   user: User | null
@@ -22,6 +26,7 @@ interface AuthContextType {
   register: (email: string, password: string, displayName?: string) => Promise<void>
   loginWithGoogle: () => Promise<void>
   logout: () => Promise<void>
+  deleteAccount: () => Promise<void>
   getUserDisplayName: () => string
   getUserPhoto: () => string | null
   sendEmailVerification: () => Promise<void>
@@ -85,6 +90,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await signOut(auth)
   }
 
+  const deleteAccount = async (password?: string) => {
+    if (!user) {
+      throw new Error('Kullanıcı giriş yapmamış')
+    }
+
+    try {
+      // 1. Re-authentication yap (gerekli)
+      if (user.email && password) {
+        const credential = EmailAuthProvider.credential(user.email, password)
+        await reauthenticateWithCredential(user, credential)
+      } else if (user.providerData.some(provider => provider.providerId === 'google.com')) {
+        // Google ile giriş yapmışsa, Google ile re-authenticate et
+        const provider = new GoogleAuthProvider()
+        await signInWithPopup(auth, provider)
+      } else {
+        throw new Error('Hesap silmek için şifrenizi girmeniz gerekiyor')
+      }
+
+      // 2. Firestore'dan kullanıcının tüm verilerini sil
+      const userId = user.uid
+      
+      // Favorileri sil
+      const favoritesQuery = query(collection(db, 'favorites'), where('userId', '==', userId))
+      const favoritesSnapshot = await getDocs(favoritesQuery)
+      const favoritesDeletePromises = favoritesSnapshot.docs.map(docSnapshot => 
+        deleteDoc(doc(db, 'favorites', docSnapshot.id))
+      )
+      await Promise.all(favoritesDeletePromises)
+
+      // İlanları sil (gelecekte eklenecek)
+      // const listingsQuery = query(collection(db, 'listings'), where('userId', '==', userId))
+      // const listingsSnapshot = await getDocs(listingsQuery)
+      // const listingsDeletePromises = listingsSnapshot.docs.map(docSnapshot => 
+      //   deleteDoc(doc(db, 'listings', docSnapshot.id))
+      // )
+      // await Promise.all(listingsDeletePromises)
+
+      // 3. Firebase Authentication'dan hesabı sil
+      await deleteUser(user)
+      
+      // 4. Local storage'ı temizle
+      localStorage.clear()
+      
+    } catch (error) {
+      console.error('Hesap silinirken hata:', error)
+      throw error
+    }
+  }
+
   // Kullanıcı adını al - Google'dan veya email'den
   const getUserDisplayName = () => {
     if (!user) return 'Kullanıcı'
@@ -140,6 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     register,
     loginWithGoogle,
     logout,
+    deleteAccount,
     getUserDisplayName,
     getUserPhoto,
     sendEmailVerification,

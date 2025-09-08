@@ -27,7 +27,7 @@ interface FavoritesContextType {
   favorites: FavoriteCar[]
   loading: boolean
   addToFavorites: (car: Omit<FavoriteCar, 'id' | 'addedAt'>) => Promise<void>
-  removeFromFavorites: (carId: string) => Promise<void>
+  removeFromFavorites: (url: string) => Promise<void>
   isFavorite: (url: string) => boolean
   refreshFavorites: () => Promise<void>
 }
@@ -108,12 +108,19 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const removeFromFavorites = async (carId: string) => {
+  const removeFromFavorites = async (url: string) => {
     if (!user) return
 
     try {
-      await deleteDoc(doc(db, 'favorites', carId))
-      setFavorites(prev => prev.filter(fav => fav.id !== carId))
+      // URL'ye göre favoriyi bul
+      const favoriteToRemove = favorites.find(fav => fav.url === url)
+      if (!favoriteToRemove) {
+        console.warn('Kaldırılacak favori bulunamadı:', url)
+        return
+      }
+
+      await deleteDoc(doc(db, 'favorites', favoriteToRemove.id))
+      setFavorites(prev => prev.filter(fav => fav.url !== url))
     } catch (error) {
       console.error('Favori silinirken hata:', error)
       throw error

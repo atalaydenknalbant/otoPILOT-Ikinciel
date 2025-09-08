@@ -1,5 +1,8 @@
+'use client'
+import { useState } from 'react'
 import IconsRow from './IconsRow'
 import SearchBar from './SearchBar'
+import DeleteAccountDialog from './DeleteAccountDialog'
 import type { Parsed, SearchItem } from '../types'
 import Logo from './Logo'
 import { useAuth } from '../contexts/AuthContext'
@@ -16,6 +19,8 @@ export default function Header({
   parsed,
   loading,
   onCancel,
+  currentPage = 'home',
+  hideSearch = false,
 }: {
   aiMode: boolean
   onModeChange: (b: boolean) => void
@@ -27,29 +32,55 @@ export default function Header({
   parsed?: Parsed
   loading: boolean
   onCancel: () => void
+  currentPage?: 'home' | 'favorites' | 'my-listings'
+  hideSearch?: boolean
 }) {
-  const { user, logout, getUserDisplayName, getUserPhoto, isEmailVerified, sendEmailVerification } = useAuth()
+  const { user, logout, deleteAccount, getUserDisplayName, getUserPhoto, isEmailVerified, sendEmailVerification } = useAuth()
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const handleDeleteAccount = async (password: string) => {
+    setIsDeleting(true)
+    try {
+      await deleteAccount(password)
+      setShowDeleteDialog(false)
+      alert('Hesabınız başarıyla silindi.')
+    } catch (error) {
+      console.error('Hesap silinirken hata:', error)
+      alert('Hesap silinirken bir hata oluştu. Lütfen tekrar deneyin.')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const isGoogleUser = user?.providerData.some(provider => provider.providerId === 'google.com') || false
+
   return (
     <header className="bg-white/70 backdrop-blur border-b border-gray-100">
       <div className="container pl-0 pr-4 py-4 flex items-center gap-2 md:gap-3">
-        <div className="shrink-0 -ml-2 md:-ml-3">
+        <div className="shrink-0 -ml-2 md:-ml-3 flex items-center gap-3">
           <Logo src="/logo/logo.svg" desktopHeightClass="h-16 md:h-20 lg:h-24" mobileHeightClass="h-14" />
+          {currentPage === 'favorites' && (
+            <h1 className="text-2xl font-bold text-gray-900">Favori Araçlarım</h1>
+          )}
         </div>
-        <div className="flex-1 min-w-0">
-          <SearchBar
-            aiMode={aiMode}
-            onModeChange={onModeChange}
-            onResults={onResults}
-            onLoading={onLoading}
-            onParsed={onParsed}
-            modelReady={modelReady}
-            onModelReady={onModelReady}
-            parsed={parsed}
-            loading={loading}
-            onCancel={onCancel}
-          />
-        </div>
-        <div className="hidden md:flex flex-none items-center gap-2 ml-2 md:ml-3">
+        {!hideSearch && (
+          <div className="flex-1 min-w-0">
+            <SearchBar
+              aiMode={aiMode}
+              onModeChange={onModeChange}
+              onResults={onResults}
+              onLoading={onLoading}
+              onParsed={onParsed}
+              modelReady={modelReady}
+              onModelReady={onModelReady}
+              parsed={parsed}
+              loading={loading}
+              onCancel={onCancel}
+            />
+          </div>
+        )}
+        <div className={`hidden md:flex flex-none items-center gap-2 ${hideSearch ? 'ml-auto' : 'ml-2 md:ml-3'}`}>
           {user ? (
             <div className="flex items-center gap-2">
               {/* Kullanıcı Menüsü */}
@@ -78,21 +109,39 @@ export default function Header({
                 {/* Dropdown Menü */}
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                   <div className="py-1">
-                    <a 
-                      href="/favorites" 
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Favorilerim
-                    </a>
-                    <a 
-                      href="/my-listings" 
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      İlanlarım
-                    </a>
+                    {currentPage !== 'favorites' && (
+                      <a 
+                        href="/favorites" 
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Favorilerim
+                      </a>
+                    )}
+                    {currentPage === 'favorites' && (
+                      <a 
+                        href="/" 
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Ana Sayfaya Dön
+                      </a>
+                    )}
+                    {currentPage !== 'my-listings' && (
+                      <a 
+                        href="/my-listings" 
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        İlanlarım
+                      </a>
+                    )}
                     <hr className="my-1" />
                     <button 
                       onClick={logout}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Çıkış Yap
+                    </button>
+                    <button 
+                      onClick={() => setShowDeleteDialog(true)}
                       className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                     >
                       Hesap Sil
@@ -101,13 +150,6 @@ export default function Header({
                 </div>
               </div>
               
-              {/* Çıkış Yap Butonu */}
-              <button 
-                onClick={logout}
-                className="btn btn-gradient whitespace-nowrap"
-              >
-                Çıkış Yap
-              </button>
             </div>
           ) : (
             <a 
@@ -148,6 +190,15 @@ export default function Header({
           </div>
         </div>
       )}
+
+      {/* Delete Account Dialog */}
+      <DeleteAccountDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleDeleteAccount}
+        isLoading={isDeleting}
+        isGoogleUser={isGoogleUser}
+      />
     </header>
   )
 }
