@@ -1,7 +1,9 @@
 import CarCard from './CarCard'
+import { useAdverts } from '../contexts/AdvertsContext'
 import type { SearchItem } from '../types'
 
 export default function ResultList({ items, loading }: { items: SearchItem[]; loading: boolean }) {
+  const { isAdvertUrl } = useAdverts()
   if (loading) return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {Array.from({ length: 6 }).map((_, i) => (
@@ -12,7 +14,13 @@ export default function ResultList({ items, loading }: { items: SearchItem[]; lo
   if (!items?.length) return <div className="text-gray-500">Sonuç bulunamadı.</div>
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {items.map((it, idx) => <CarCard key={idx} item={it} />)}
+      {items.map((it, idx) => (
+        <CarCard 
+          key={idx} 
+          item={it} 
+          isPromoted={it.url ? isAdvertUrl(it.url) : false}
+        />
+      ))}
     </div>
   )
 }

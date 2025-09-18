@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 import IconsRow from './IconsRow'
 import SearchBar from './SearchBar'
 import DeleteAccountDialog from './DeleteAccountDialog'
@@ -9,29 +10,29 @@ import { useAuth } from '../contexts/AuthContext'
 import Image from 'next/image'
 
 export default function Header({
-  aiMode,
-  onModeChange,
-  onResults,
-  onLoading,
+  aiMode = false,
+  onModeChange = () => {},
+  onResults = () => {},
+  onLoading = () => {},
   onParsed,
-  modelReady,
-  onModelReady,
+  modelReady = false,
+  onModelReady = () => {},
   parsed,
-  loading,
-  onCancel,
+  loading = false,
+  onCancel = () => {},
   currentPage = 'home',
   hideSearch = false,
 }: {
-  aiMode: boolean
-  onModeChange: (b: boolean) => void
-  onResults: (items: SearchItem[]) => void
-  onLoading: (b: boolean) => void
+  aiMode?: boolean
+  onModeChange?: (b: boolean) => void
+  onResults?: (items: SearchItem[], parsed?: Parsed) => void
+  onLoading?: (b: boolean) => void
   onParsed?: (json: Parsed) => void
-  modelReady: boolean
-  onModelReady: (b: boolean) => void
+  modelReady?: boolean
+  onModelReady?: (b: boolean) => void
   parsed?: Parsed
-  loading: boolean
-  onCancel: () => void
+  loading?: boolean
+  onCancel?: () => void
   currentPage?: 'home' | 'favorites' | 'my-listings'
   hideSearch?: boolean
 }) {
@@ -110,28 +111,28 @@ export default function Header({
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                   <div className="py-1">
                     {currentPage !== 'favorites' && (
-                      <a 
+                      <Link 
                         href="/favorites" 
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
                         Favorilerim
-                      </a>
+                      </Link>
                     )}
                     {currentPage === 'favorites' && (
-                      <a 
+                      <Link 
                         href="/" 
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
                         Ana Sayfaya Dön
-                      </a>
+                      </Link>
                     )}
                     {currentPage !== 'my-listings' && (
-                      <a 
+                      <Link 
                         href="/my-listings" 
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
                         İlanlarım
-                      </a>
+                      </Link>
                     )}
                     <hr className="my-1" />
                     <button 
@@ -152,12 +153,12 @@ export default function Header({
               
             </div>
           ) : (
-            <a 
+            <Link 
               href="/login" 
               className="btn btn-gradient whitespace-nowrap"
             >
               Giriş Yap
-            </a>
+            </Link>
           )}
         </div>
       </div>

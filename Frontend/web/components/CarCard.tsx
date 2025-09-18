@@ -1,7 +1,7 @@
 import type { SearchItem } from '../types'
 import HeartButton from './HeartButton'
 
-export default function CarCard({ item }: { item: SearchItem }) {
+export default function CarCard({ item, isPromoted = false }: { item: SearchItem; isPromoted?: boolean }) {
   const {
     imageUrl,
     url,
@@ -16,7 +16,14 @@ export default function CarCard({ item }: { item: SearchItem }) {
   } = item || {}
 
   return (
-    <article className="card overflow-hidden relative">
+    <article className={`card overflow-hidden relative ${isPromoted ? 'border-2 border-red-500 shadow-lg' : ''}`}>
+      {isPromoted && (
+        <div className="absolute top-2 left-2 z-10">
+          <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+            Öne Çıkan
+          </span>
+        </div>
+      )}
       {imageUrl ? (
         <div className="relative h-44 w-full">
           {/* eslint-disable-next-line @next/next/no-img-element */}
