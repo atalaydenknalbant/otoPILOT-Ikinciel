@@ -4,6 +4,11 @@ export type ParsedFilters = {
   model?: string
   minYear?: number
   maxPrice?: number
+  ana_kategori?: string[]
+  renkler?: string[]
+  vites?: string[]
+  arac_durumu?: string[]
+  boya_degişen_parca?: string[]
 }
 
 export type CarItem = {
@@ -18,6 +23,10 @@ export type CarItem = {
   date?: string
   source?: string
 }
+
+export type SearchItem = CarItem
+
+export type Parsed = ParsedFilters
 
 export type ScrapeResponse = {
   items: CarItem[]

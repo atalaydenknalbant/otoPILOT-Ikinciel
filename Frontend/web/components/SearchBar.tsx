@@ -18,7 +18,7 @@ export default function SearchBar({
 }: {
   aiMode: boolean
   onModeChange: (b: boolean) => void
-  onResults: (items: SearchItem[]) => void
+  onResults: (items: SearchItem[], parsed?: Parsed) => void
   onLoading: (b: boolean) => void
   onParsed?: (json: Parsed) => void
   modelReady: boolean
