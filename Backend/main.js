@@ -4,10 +4,86 @@ import { readFile } from 'fs/promises';
 import { log } from 'crawlee';
 import { ArabamScraper } from './scrape.js';
 import { FavoriteScraper } from './favorite.js';
+import { AdvertScraper } from './advert.js';
+// FIREBASE IMPORT'LARI - Reklam eşleştirmesi için gerekli
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 app.use(express.json({ limit: '150mb' }));
+
+// FIREBASE KONFİGÜRASYONU - Reklam eşleştirmesi için
+const firebaseConfig = {
+  apiKey: process.env.FIREBASE_API_KEY,
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.FIREBASE_APP_ID
+};
+
+// Firebase'i başlat
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+
+// REKLAM EŞLEŞTİRME FONKSİYONU - Marka/model'e göre reklamları bul
+async function getPromotedAdsByBrandModel(brand, model) {
+  try {
+    log.info(`Reklam eşleştirmesi başlatılıyor: ${brand} ${model}`);
+    
+    // Firebase'den aynı marka/model'e sahip aktif reklamları çek
+    const promotedAdsRef = collection(db, 'promoted_ads');
+    const q = query(
+      promotedAdsRef, 
+      where('brand', '==', brand.toLowerCase()),
+      where('model', '==', model.toLowerCase()),
+      where('isActive', '==', true)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const promotedAds = [];
+    
+    querySnapshot.forEach((doc) => {
+      promotedAds.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+    
+    log.info(`${promotedAds.length} adet reklam bulundu: ${brand} ${model}`);
+    
+    // Bulunan reklamları scrape et
+    const scrapedPromotedAds = [];
+    const advertScraper = new AdvertScraper();
+    
+    for (const ad of promotedAds) {
+      try {
+        log.info(`Reklam scrape ediliyor: ${ad.url}`);
+        const scrapedData = await advertScraper.scrapeAdvert(ad.url);
+        
+        // Reklam olduğunu işaretle
+        scrapedPromotedAds.push({
+          ...scrapedData,
+          url: ad.url,
+          isPromoted: true,
+          promotedBy: ad.userId,
+          promotedAt: ad.createdAt
+        });
+        
+        log.info(`Reklam başarıyla scrape edildi: ${scrapedData.title}`);
+      } catch (error) {
+        log.error(`Reklam scrape hatası: ${ad.url} - ${error.message}`);
+      }
+    }
+    
+    return scrapedPromotedAds;
+    
+  } catch (error) {
+    log.error(`Reklam eşleştirme hatası: ${error.message}`);
+    return [];
+  }
+}
 
 // Ollama configuration 
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
@@ -346,6 +422,29 @@ app.post('/scrape-favorites', async (req, res) => {
   } catch (error) {
     log.error(`Favori scraping hatası: ${error.message}`);
     res.status(500).json({ error: 'Favori verileri çekilemedi' });
+  }
+});
+
+// İlan scrape endpoint'i
+app.post('/scrape-advert', async (req, res) => {
+  try {
+    const { url } = req.body;
+    
+    if (!url) {
+      return res.status(400).json({ error: 'URL gerekli' });
+    }
+    
+    console.log(`İlan scrape isteği alındı: ${url}`);
+    
+    const scraper = new AdvertScraper();
+    const result = await scraper.scrapeAdvert(url);
+    
+    console.log('İlan başarıyla scrape edildi:', result);
+    res.json(result);
+    
+  } catch (error) {
+    console.error('İlan scrape hatası:', error);
+    res.status(500).json({ error: 'İlan bilgileri alınamadı' });
   }
 });
 

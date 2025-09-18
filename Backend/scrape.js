@@ -71,7 +71,7 @@ export class ArabamScraper {
         }
 
         const params = new URLSearchParams();
-        params.set('take', '50');
+        params.set('take', '200');
 
         if (minYear) params.set('minYear', minYear);
         if (maxYear) params.set('maxYear', maxYear);
