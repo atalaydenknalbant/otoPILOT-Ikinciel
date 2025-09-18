@@ -16,11 +16,11 @@ export default function CarCard({ item, isPromoted = false }: { item: SearchItem
   } = item || {}
 
   return (
-    <article className={`card overflow-hidden relative ${isPromoted ? 'border-2 border-red-500 shadow-lg' : ''}`}>
+    <article className={`card overflow-hidden relative ${isPromoted ? 'border-2 border-red-500 shadow-xl ring-2 ring-red-200' : ''}`}>
       {isPromoted && (
         <div className="absolute top-2 left-2 z-10">
-          <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-            Öne Çıkan
+          <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
+            Fırsat Aracı
           </span>
         </div>
       )}

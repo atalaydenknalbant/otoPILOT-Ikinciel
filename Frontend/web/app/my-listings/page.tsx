@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import Header from '../../components/Header'
 import { collection, query, where, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
+import { getAdvertCache, setAdvertCache, clearAdvertCache, getLastAdvertUpdateTime } from '../../lib/advertCache'
 
 interface AdvertItem {
   id: string
@@ -27,26 +28,44 @@ export default function MyListingsPage() {
   const [showLinkForm, setShowLinkForm] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [lastUpdateTime, setLastUpdateTime] = useState<string | null>(null)
 
   // İlanları yükle
-  const loadAdverts = useCallback(async () => {
+  const loadAdverts = useCallback(async (useCache = true) => {
     if (!user) return
+    
+    // Önce cache'den yükle
+    if (useCache) {
+      const cachedAdverts = getAdvertCache()
+      if (cachedAdverts.length > 0) {
+        console.log('Cache\'den yüklenen ilanlar:', cachedAdverts.length)
+        setAdverts(cachedAdverts)
+        setLastUpdateTime(getLastAdvertUpdateTime())
+        return
+      }
+    }
     
     setLoading(true)
     try {
+      console.log('Firebase\'den ilanlar yükleniyor...')
       const advertsRef = collection(db, 'adverts')
       const q = query(advertsRef, where('userId', '==', user.uid))
       const querySnapshot = await getDocs(q)
       
       const advertsData: AdvertItem[] = []
       querySnapshot.forEach((doc) => {
+        const data = doc.data()
+        console.log('Firebase\'den gelen ilan:', data.title)
         advertsData.push({
           id: doc.id,
-          ...doc.data()
+          ...data
         } as AdvertItem)
       })
       
+      console.log('Toplam yüklenen ilan sayısı:', advertsData.length)
       setAdverts(advertsData)
+      setAdvertCache(advertsData)
+      setLastUpdateTime(getLastAdvertUpdateTime())
     } catch (error) {
       console.error('İlanlar yüklenirken hata:', error)
     } finally {
@@ -118,7 +137,8 @@ export default function MyListingsPage() {
   }
 
   useEffect(() => {
-    loadAdverts()
+    // İlk yüklemede cache'i atla, direkt Firebase'den yükle
+    loadAdverts(false)
   }, [user, loadAdverts])
 
   if (!user) {
@@ -240,9 +260,35 @@ export default function MyListingsPage() {
 
         {/* İlanlar Listesi */}
         <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            İlanlarım ({adverts.length})
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">
+              İlanlarım ({adverts.length})
+            </h2>
+            <div className="flex gap-2">
+              <button
+                onClick={() => loadAdverts(false)}
+                disabled={loading}
+                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50"
+              >
+                {loading ? 'Yükleniyor...' : 'Verileri Güncelle'}
+              </button>
+              <button
+                onClick={() => {
+                  clearAdvertCache()
+                  loadAdverts(false)
+                }}
+                className="px-3 py-1 bg-gray-600 text-white text-sm rounded hover:bg-gray-700"
+              >
+                Önbellek Temizle
+              </button>
+            </div>
+          </div>
+          
+          {lastUpdateTime && (
+            <p className="text-sm text-gray-500 mb-4">
+              Son güncelleme: {lastUpdateTime}
+            </p>
+          )}
           
           {loading ? (
             <div className="text-center py-8">
@@ -268,10 +314,15 @@ export default function MyListingsPage() {
                     />
                     <div className="flex-1">
                       <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-semibold text-gray-900 mb-1">
+                        <div className="flex-1">
+                          <a 
+                            href={advert.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="font-semibold text-gray-900 mb-1 hover:text-blue-600 hover:underline block"
+                          >
                             {advert.title}
-                          </h3>
+                          </a>
                           <p className="text-lg font-bold text-blue-600 mb-2">
                             {advert.price}
                           </p>

@@ -126,7 +126,15 @@ export default function Header({
                         Ana Sayfaya Dön
                       </Link>
                     )}
-                    {currentPage !== 'my-listings' && (
+                    {currentPage === 'my-listings' && (
+                      <Link 
+                        href="/" 
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Ana Sayfaya Dön
+                      </Link>
+                    )}
+                    {currentPage !== 'my-listings' && currentPage !== 'favorites' && (
                       <Link 
                         href="/my-listings" 
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
