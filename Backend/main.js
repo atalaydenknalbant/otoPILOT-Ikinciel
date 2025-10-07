@@ -151,7 +151,7 @@ function normalizeManualFilters(input) {
   return data;
 }
 
-// Build the detailed system prompt with valid options from category data
+// Build the system prompt with valid options from category data
 function buildSystemPrompt(data) {
   const get = (obj, key, fallback = []) => (obj && Object.prototype.hasOwnProperty.call(obj, key) ? obj[key] : fallback);
   const yakit_tipi = JSON.stringify(get(data, 'yakit_tipi'));
