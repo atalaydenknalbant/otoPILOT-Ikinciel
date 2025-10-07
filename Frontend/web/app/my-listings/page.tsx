@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { useAuth } from '../../contexts/AuthContext'
 import Header from '../../components/Header'
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore'
-import { db } from '../../lib/firebase'
 import { getAdvertCache, setAdvertCache, clearAdvertCache, getLastAdvertUpdateTime } from '../../lib/advertCache'
 
 interface AdvertItem {
@@ -19,6 +17,8 @@ interface AdvertItem {
   km: string
   createdAt: any
   isPromoted: boolean
+  brand?: string
+  model?: string
 }
 
 export default function MyListingsPage() {
@@ -29,6 +29,7 @@ export default function MyListingsPage() {
   const [linkUrl, setLinkUrl] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [lastUpdateTime, setLastUpdateTime] = useState<string | null>(null)
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   // İlanları yükle
   const loadAdverts = useCallback(async (useCache = true) => {
@@ -47,24 +48,12 @@ export default function MyListingsPage() {
     
     setLoading(true)
     try {
-      console.log('Firebase\'den ilanlar yükleniyor...')
-      const advertsRef = collection(db, 'adverts')
-      const q = query(advertsRef, where('userId', '==', user.uid))
-      const querySnapshot = await getDocs(q)
-      
-      const advertsData: AdvertItem[] = []
-      querySnapshot.forEach((doc) => {
-        const data = doc.data()
-        console.log('Firebase\'den gelen ilan:', data.title)
-        advertsData.push({
-          id: doc.id,
-          ...data
-        } as AdvertItem)
-      })
-      
-      console.log('Toplam yüklenen ilan sayısı:', advertsData.length)
-      setAdverts(advertsData)
-      setAdvertCache(advertsData)
+      const resp = await fetch(`/api/user-promoted-ads/${user.uid}`, { cache: 'no-store' })
+      const json = resp.ok ? await resp.json() : { items: [] as AdvertItem[] }
+      const items = Array.isArray(json.items) ? json.items : []
+      console.log('Toplam yüklenen ilan sayısı:', items.length)
+      setAdverts(items)
+      setAdvertCache(items)
       setLastUpdateTime(getLastAdvertUpdateTime())
     } catch (error) {
       console.error('İlanlar yüklenirken hata:', error)
@@ -74,6 +63,32 @@ export default function MyListingsPage() {
   }, [user])
 
   // Link ile ilan ekle
+  const [brand, setBrand] = useState('')
+  const [model, setModel] = useState('')
+  const [expiresDays, setExpiresDays] = useState<number>(30)
+  const [brandOptions, setBrandOptions] = useState<string[]>([])
+  const [modelOptions, setModelOptions] = useState<string[]>([])
+
+  // Marka/Model seçeneklerini public JSON'dan yükle
+  useEffect(() => {
+    let cancelled = false
+    const loadOptions = async () => {
+      try {
+        const res = await fetch('/data/arabam_sequence_categories.json', { cache: 'force-cache' })
+        const json = await res.json()
+        const otomobil: Array<{ marka: string; modeller: string[] }> = json?.arabalar?.Otomobil || []
+        const brands = otomobil.map((x) => x.marka)
+        if (!cancelled) setBrandOptions(brands)
+        if (!cancelled && brand) {
+          const found = otomobil.find((x) => x.marka === brand)
+          setModelOptions(found?.modeller || [])
+        }
+      } catch {}
+    }
+    loadOptions()
+    return () => { cancelled = true }
+  }, [brand])
+
   const handleAddLink = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user || !linkUrl.trim()) return
@@ -90,33 +105,44 @@ export default function MyListingsPage() {
       })
 
       if (!response.ok) {
-        throw new Error('İlan bilgileri alınamadı')
+        const errTxt = await response.text().catch(() => '')
+        throw new Error(errTxt || 'İlan bilgileri alınamadı')
       }
 
       const advertData = await response.json()
 
-      // Firebase'e kaydet
-      const advertsRef = collection(db, 'adverts')
-      await addDoc(advertsRef, {
-        userId: user.uid,
-        url: linkUrl,
-        title: advertData.title,
-        price: advertData.price,
-        imageUrl: advertData.imageUrl,
-        location: advertData.location,
-        year: advertData.year,
-        km: advertData.km,
-        isPromoted: true,
-        createdAt: new Date()
+      // Server API ile kaydet (listings + opsiyonel promoted_listings)
+      const saveResp = await fetch('/api/add-promoted-ad', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.uid,
+          url: linkUrl,
+          // Formdan gelen marka/model öncelikli, yoksa scrape verisi
+          brand: brand || advertData.brand || '',
+          model: model || advertData.model || '',
+          title: advertData.title || '',
+          price: advertData.price || '',
+          imageUrl: advertData.imageUrl || '',
+          expiresDays: Number.isFinite(expiresDays) ? expiresDays : 30,
+        })
       })
 
+      if (!saveResp.ok) {
+        const errTxt = await saveResp.text().catch(() => '')
+        throw new Error(errTxt || 'İlan kaydı başarısız')
+      }
+
       setLinkUrl('')
+      setBrand('')
+      setModel('')
+      setExpiresDays(30)
       setShowLinkForm(false)
-      loadAdverts()
-      alert('İlanınız başarıyla eklendi!')
+      await loadAdverts(false)
+      setMessage({ type: 'success', text: 'İlanınız başarıyla eklendi!' })
     } catch (error) {
       console.error('İlan eklenirken hata:', error)
-      alert('İlan eklenirken bir hata oluştu')
+      setMessage({ type: 'error', text: `İlan eklenemedi: ${(error as Error)?.message || 'Bilinmeyen hata'}` })
     } finally {
       setSubmitting(false)
     }
@@ -127,12 +153,20 @@ export default function MyListingsPage() {
     if (!confirm('Bu ilanı silmek istediğinizden emin misiniz?')) return
 
     try {
-      await deleteDoc(doc(db, 'adverts', advertId))
-      loadAdverts()
-      alert('İlan silindi')
+      const resp = await fetch(`/api/delete-promoted-ad/${advertId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user?.uid })
+      })
+      if (!resp.ok) {
+        const errTxt = await resp.text().catch(() => '')
+        throw new Error(errTxt || 'Silme başarısız')
+      }
+      await loadAdverts(false)
+      setMessage({ type: 'success', text: 'İlan silindi.' })
     } catch (error) {
       console.error('İlan silinirken hata:', error)
-      alert('İlan silinirken bir hata oluştu')
+      setMessage({ type: 'error', text: `İlan silinemedi: ${(error as Error)?.message || 'Bilinmeyen hata'}` })
     }
   }
 
@@ -164,6 +198,12 @@ export default function MyListingsPage() {
       <Header currentPage="my-listings" hideSearch={true} />
       
       <div className="container mx-auto px-4 py-8">
+        {message && (
+          <div className={`mb-4 p-3 rounded border text-sm flex items-start justify-between ${message.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
+            <span>{message.text}</span>
+            <button className="ml-4 text-xs underline" onClick={() => setMessage(null)}>Kapat</button>
+          </div>
+        )}
         {/* Başlık */}
         <div className="flex items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">İlanlarım</h1>
@@ -236,6 +276,48 @@ export default function MyListingsPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
+                </div>
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Marka</label>
+                    <select
+                      value={brand}
+                      onChange={(e) => { setBrand(e.target.value); setModel('') }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    >
+                      <option value="">Seçiniz</option>
+                      {brandOptions.map((b) => (
+                        <option key={b} value={b}>{b}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Model</label>
+                    <select
+                      value={model}
+                      onChange={(e) => setModel(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      disabled={!brand}
+                    >
+                      <option value="">Seçiniz</option>
+                      {modelOptions.map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Öne Çıkarma Süresi</label>
+                  <select
+                    value={String(expiresDays)}
+                    onChange={(e) => setExpiresDays(parseInt(e.target.value, 10))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  >
+                    <option value="15">15 Gün</option>
+                    <option value="30">1 Ay</option>
+                    <option value="60">2 Ay</option>
+                    <option value="90">3 Ay</option>
+                  </select>
                 </div>
                 <div className="flex gap-3">
                   <button
@@ -315,22 +397,14 @@ export default function MyListingsPage() {
                     <div className="flex-1">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <a 
-                            href={advert.url} 
-                            target="_blank" 
+                          <a
+                            href={advert.url}
+                            target="_blank"
                             rel="noopener noreferrer"
                             className="font-semibold text-gray-900 mb-1 hover:text-blue-600 hover:underline block"
                           >
                             {advert.title}
                           </a>
-                          <p className="text-lg font-bold text-blue-600 mb-2">
-                            {advert.price}
-                          </p>
-                          <div className="flex gap-4 text-sm text-gray-600">
-                            <span>{advert.year}</span>
-                            <span>{advert.km} km</span>
-                            <span>{advert.location}</span>
-                          </div>
                           {advert.isPromoted && (
                             <span className="inline-block mt-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded">
                               Öne Çıkan
