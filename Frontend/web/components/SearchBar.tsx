@@ -88,6 +88,87 @@ export default function SearchBar({
     onLoading(true)
     try {
       const runId = beginNewRun()
+
+      const mergeAndEmit = async (items: SearchItem[], parsedForEmit?: Parsed) => {
+        // 1) Brand/Model'e göre aktif promoted URL'leri al ve scrape edip başa ekle
+        let headPromoted: SearchItem[] = []
+        try {
+          const brandRaw = (parsedForEmit as any)?.marka || (parsedForEmit as any)?.brand
+          const modelRaw = (parsedForEmit as any)?.model
+          const brand = Array.isArray(brandRaw) ? brandRaw[0] : brandRaw
+          const model = Array.isArray(modelRaw) ? modelRaw[0] : modelRaw
+          if (brand && model) {
+            const qs = new URLSearchParams({ brand: String(brand), model: String(model) }).toString()
+            const url = `/api/promoted-urls?${qs}`
+            const urlsResp = await fetch(url)
+            const urlsJson = urlsResp.ok ? await urlsResp.json() : { urls: [] as string[] }
+            const urlsToScrape: string[] = Array.isArray(urlsJson.urls) ? urlsJson.urls : []
+            if (urlsToScrape.length) {
+              const resp = await fetch('/api/scrape-favorites', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ urls: urlsToScrape })
+              })
+              if (resp.ok) {
+                const data = await resp.json()
+                headPromoted = ((data.cars || []) as SearchItem[]).map((it: any) => ({ ...it, __promoted: true }))
+              }
+            }
+          }
+        } catch {}
+
+        // 2) Mevcut sonuçlarda promoted olanları üste taşı (relative order korunur)
+        try {
+          const urls = (items || []).map((it: any) => it?.url).filter(Boolean) as string[]
+          if (urls.length) {
+            const resp = await fetch('/api/mark-promoted', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ urls })
+            })
+            const json = resp.ok ? await resp.json() : { map: {} as Record<string, boolean> }
+            const map = (json?.map || {}) as Record<string, boolean>
+            const promoted: SearchItem[] = []
+            const others: SearchItem[] = []
+            for (const it of items) {
+              const u = (it as any)?.url
+              if (u && map[u]) promoted.push({ ...(it as any), __promoted: true })
+              else others.push(it)
+            }
+            const seen = new Set<string>()
+            const addUnique = (arr: SearchItem[], bucket: SearchItem[]) => {
+              for (const it of arr) {
+                const u = (it as any)?.url
+                if (!u || seen.has(u)) continue
+                seen.add(u)
+                bucket.push(it)
+              }
+            }
+            const finalList: SearchItem[] = []
+            addUnique(headPromoted, finalList)
+            addUnique(promoted, finalList)
+            addUnique(others, finalList)
+            onResults(finalList, parsedForEmit)
+            return
+          }
+        } catch {}
+
+        // 3) Fallback: sadece headPromoted + items (de-dup)
+        const seen = new Set<string>()
+        const finalList: SearchItem[] = []
+        const addUnique2 = (arr: SearchItem[]) => {
+          for (const it of arr) {
+            const u = (it as any)?.url
+            if (!u || seen.has(u)) continue
+            seen.add(u)
+            finalList.push(it)
+          }
+        }
+        addUnique2(headPromoted)
+        addUnique2(items)
+        onResults(finalList, parsedForEmit)
+      }
+
       if (aiMode) {
         const parsedJson: unknown = await parseWithLocalModel(q)
         if (getRunId() !== runId) return
@@ -98,10 +179,9 @@ export default function SearchBar({
         if (resp.filters) {
           const finalParsed = { ...base, ...(resp.filters as any) }
           onParsed?.(finalParsed)
-          // Filtreler güncellendikten sonra cache'e kaydet
-          onResults(resp.items, finalParsed)
+          await mergeAndEmit(resp.items, finalParsed)
         } else {
-          onResults(resp.items, base)
+          await mergeAndEmit(resp.items, base)
         }
         onModelReady(true)
       } else {
@@ -112,9 +192,9 @@ export default function SearchBar({
         if (resp.filters) {
           const finalParsed = { ...next, ...(resp.filters as any) }
           onParsed?.(finalParsed)
-          onResults(resp.items, finalParsed)
+          await mergeAndEmit(resp.items, finalParsed)
         } else {
-          onResults(resp.items, next)
+          await mergeAndEmit(resp.items, next)
         }
       }
     } finally {

@@ -20,6 +20,11 @@ export default function ResultList({ items, loading }: { items: SearchItem[]; lo
   const normalItems: SearchItem[] = []
   
   items.forEach((item) => {
+    const flagged = (item as any)?.__promoted === true
+    if (flagged) {
+      promotedItems.push(item)
+      return
+    }
     if (item.url && isAdvertUrl(item.url)) {
       promotedItems.push(item)
     } else {
@@ -27,49 +32,21 @@ export default function ResultList({ items, loading }: { items: SearchItem[]; lo
     }
   })
   
-  // Önce öne çıkan ilanları, sonra normal ilanları göster
+  // Tek grid: promoted önce, sonra diğerleri; başlık yok
   const sortedItems = [...promotedItems, ...normalItems]
-  
+
   return (
-    <div className="space-y-6">
-      {/* Öne Çıkan İlanlar */}
-      {promotedItems.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <span className="w-3 h-3 bg-red-500 rounded-full mr-2"></span>
-            Fırsat Araçları
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {promotedItems.map((it, idx) => (
-              <CarCard 
-                key={`promoted-${idx}`} 
-                item={it} 
-                isPromoted={true}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-      
-      {/* Normal İlanlar */}
-      {normalItems.length > 0 && (
-        <div>
-          {promotedItems.length > 0 && (
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Diğer İlanlar
-            </h3>
-          )}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {normalItems.map((it, idx) => (
-              <CarCard 
-                key={`normal-${idx}`} 
-                item={it} 
-                isPromoted={false}
-              />
-            ))}
-          </div>
-        </div>
-      )}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {sortedItems.map((it, idx) => {
+        const flagged = (it as any)?.__promoted === true || (it.url && isAdvertUrl(it.url))
+        return (
+          <CarCard
+            key={`item-${idx}`}
+            item={it}
+            isPromoted={!!flagged}
+          />
+        )
+      })}
     </div>
   )
 }

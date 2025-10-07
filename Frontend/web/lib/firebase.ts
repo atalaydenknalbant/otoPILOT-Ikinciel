@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app'
+import { initializeApp, getApps, getApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 
@@ -13,8 +13,8 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 }
 
-// Firebase'i başlat
-const app = initializeApp(firebaseConfig)
+// Firebase'i tek sefere mahsus başlat (SSR/HMR güvenli)
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig)
 
 // Auth ve Firestore instance'larını export et
 export const auth = getAuth(app)
