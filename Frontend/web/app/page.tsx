@@ -5,7 +5,7 @@ import ModelStatus from '../components/ModelStatus'
 import { useEffect, useState } from 'react'
 import ParsedChips from '../components/ParsedChips'
 import { scrapeSearch, cancelRun, beginNewRun, getRunId } from '../lib/api'
-import { useMockModelLoader } from '../hooks/useMockModelLoader'
+import { useWebModelLoader } from '../hooks/useWebModelLoader'
 import { getSearchMode, setSearchMode } from '../lib/searchMode'
 import { getSearchCache, setSearchCache, clearSearchCache, getLastSearchTime, setupCacheCleanup } from '../lib/searchCache'
 import type { Parsed, SearchItem } from '../types'
@@ -23,7 +23,7 @@ export default function Page() {
   })
   const [lastSearchTime, setLastSearchTime] = useState<string | null>(null)
   const [modelReady, setModelReady] = useState(false)
-  const { progress, ready } = useMockModelLoader(aiMode && !modelReady)
+  const { progress, ready, status, activeFile, error, modelId } = useWebModelLoader(aiMode && !modelReady)
   
   useEffect(() => {
     if (ready) setModelReady(true)
@@ -122,6 +122,10 @@ export default function Page() {
         <ModelStatus 
           modelReady={modelReady} 
           progress={progress}
+          statusText={status}
+          activeFile={activeFile}
+          errorText={error}
+          modelId={modelId}
           lastSearchTime={lastSearchTime}
           onClearCache={handleClearCache}
         />

@@ -12,8 +12,22 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const importMap = JSON.stringify({
+    imports: {
+      'onnxruntime-web/webgpu': '/vendor/ort.webgpu.bundle.min.mjs',
+      'onnxruntime-web': '/vendor/ort.webgpu.bundle.min.mjs',
+      'onnxruntime-common': '/vendor/onnxruntime-common/index.js',
+    },
+  })
+
   return (
     <html lang="tr">
+      <head>
+        <script
+          type="importmap"
+          dangerouslySetInnerHTML={{ __html: importMap }}
+        />
+      </head>
       <body className="min-h-screen bg-gray-50 text-gray-900 antialiased">
         <AuthProvider>
           <FavoritesProvider>

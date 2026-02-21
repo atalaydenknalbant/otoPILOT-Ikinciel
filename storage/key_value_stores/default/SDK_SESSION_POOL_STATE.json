@@ -1,0 +1,350 @@
+{
+  "usableSessionsCount": 4,
+  "retiredSessionsCount": 0,
+  "sessions": [
+    {
+      "id": "session_nYyeo5mN4S",
+      "cookieJar": {
+        "version": "tough-cookie@5.1.2",
+        "storeType": "MemoryCookieStore",
+        "rejectPublicSuffixes": true,
+        "enableLooseMode": false,
+        "allowSpecialUseDomain": true,
+        "prefixSecurity": "silent",
+        "cookies": [
+          {
+            "key": "source",
+            "value": "direct",
+            "expires": "2026-03-23T16:49:45.000Z",
+            "domain": "www.arabam.com",
+            "path": "/",
+            "hostOnly": true,
+            "creation": "2026-02-21T16:49:44.627Z",
+            "lastAccessed": "2026-02-21T16:49:44.627Z"
+          },
+          {
+            "key": "sessionSource",
+            "value": "direct",
+            "expires": "2026-03-23T16:49:45.000Z",
+            "domain": "www.arabam.com",
+            "path": "/",
+            "hostOnly": true,
+            "creation": "2026-02-21T16:49:44.627Z",
+            "lastAccessed": "2026-02-21T16:49:44.627Z"
+          },
+          {
+            "key": "campaign",
+            "expires": "2026-03-23T16:49:45.000Z",
+            "domain": "www.arabam.com",
+            "path": "/",
+            "hostOnly": true,
+            "creation": "2026-02-21T16:49:44.627Z",
+            "lastAccessed": "2026-02-21T16:49:44.627Z"
+          },
+          {
+            "key": "UserGuidValue",
+            "value": "2ae0b018880a79c0d05d4113897922ed",
+            "maxAge": 10368000,
+            "domain": "www.arabam.com",
+            "path": "/",
+            "secure": true,
+            "httpOnly": true,
+            "hostOnly": false,
+            "creation": "2026-02-21T16:49:44.627Z",
+            "lastAccessed": "2026-02-21T16:49:44.627Z",
+            "sameSite": "none"
+          },
+          {
+            "key": "ABTestVariant",
+            "value": "B",
+            "maxAge": 604800,
+            "domain": "www.arabam.com",
+            "path": "/",
+            "hostOnly": true,
+            "creation": "2026-02-21T16:49:44.627Z",
+            "lastAccessed": "2026-02-21T16:49:44.627Z",
+            "sameSite": "lax"
+          },
+          {
+            "key": "_cfuvid",
+            "value": "X9ijIYlSTMz2_qF2L.UkpBSK.FDWWozsCLO2HzzRINY-1771692585.3208807-1.0.1.1-a7FjGVvIt7ceYgY_zD_62fZvrWOs_DnmobJvO2TH1rc",
+            "domain": "www.arabam.com",
+            "path": "/",
+            "secure": true,
+            "httpOnly": true,
+            "hostOnly": false,
+            "creation": "2026-02-21T16:49:44.627Z",
+            "lastAccessed": "2026-02-21T16:49:44.627Z",
+            "sameSite": "none"
+          }
+        ]
+      },
+      "userData": {},
+      "maxErrorScore": 3,
+      "errorScoreDecrement": 0.5,
+      "expiresAt": "2026-02-21T17:39:43.509Z",
+      "createdAt": "2026-02-21T16:49:43.509Z",
+      "usageCount": 1,
+      "maxUsageCount": 50,
+      "errorScore": 0
+    },
+    {
+      "id": "session_ScIOKNwYEW",
+      "cookieJar": {
+        "version": "tough-cookie@5.1.2",
+        "storeType": "MemoryCookieStore",
+        "rejectPublicSuffixes": true,
+        "enableLooseMode": false,
+        "allowSpecialUseDomain": true,
+        "prefixSecurity": "silent",
+        "cookies": [
+          {
+            "key": "source",
+            "value": "direct",
+            "expires": "2026-03-23T16:49:45.000Z",
+            "domain": "www.arabam.com",
+            "path": "/",
+            "hostOnly": true,
+            "creation": "2026-02-21T16:49:57.113Z",
+            "lastAccessed": "2026-02-21T16:49:57.113Z"
+          },
+          {
+            "key": "sessionSource",
+            "value": "direct",
+            "expires": "2026-03-23T16:49:45.000Z",
+            "domain": "www.arabam.com",
+            "path": "/",
+            "hostOnly": true,
+            "creation": "2026-02-21T16:49:57.113Z",
+            "lastAccessed": "2026-02-21T16:49:57.113Z"
+          },
+          {
+            "key": "campaign",
+            "expires": "2026-03-23T16:49:45.000Z",
+            "domain": "www.arabam.com",
+            "path": "/",
+            "hostOnly": true,
+            "creation": "2026-02-21T16:49:57.113Z",
+            "lastAccessed": "2026-02-21T16:49:57.113Z"
+          },
+          {
+            "key": "UserGuidValue",
+            "value": "bc9aa64af76f733fd39f1fdf3aaa27df",
+            "maxAge": 10368000,
+            "domain": "www.arabam.com",
+            "path": "/",
+            "secure": true,
+            "httpOnly": true,
+            "hostOnly": false,
+            "creation": "2026-02-21T16:49:57.113Z",
+            "lastAccessed": "2026-02-21T16:49:57.113Z",
+            "sameSite": "none"
+          },
+          {
+            "key": "ABTestVariant",
+            "value": "B",
+            "maxAge": 604800,
+            "domain": "www.arabam.com",
+            "path": "/",
+            "hostOnly": true,
+            "creation": "2026-02-21T16:49:57.113Z",
+            "lastAccessed": "2026-02-21T16:49:57.113Z",
+            "sameSite": "lax"
+          },
+          {
+            "key": "_cfuvid",
+            "value": ".vSH33JA1pipLO44FYSVR.GrhjAcrQMFUgOKo_Yk_Vc-1771692598.3094819-1.0.1.1-jp1UYG0_PA4Wq7uK0QDrT_ocxU3e9yY.qfD9CIs91_0",
+            "domain": "www.arabam.com",
+            "path": "/",
+            "secure": true,
+            "httpOnly": true,
+            "hostOnly": false,
+            "creation": "2026-02-21T16:49:57.113Z",
+            "lastAccessed": "2026-02-21T16:49:57.113Z",
+            "sameSite": "none"
+          }
+        ]
+      },
+      "userData": {},
+      "maxErrorScore": 3,
+      "errorScoreDecrement": 0.5,
+      "expiresAt": "2026-02-21T17:39:56.936Z",
+      "createdAt": "2026-02-21T16:49:56.936Z",
+      "usageCount": 1,
+      "maxUsageCount": 50,
+      "errorScore": 0
+    },
+    {
+      "id": "session_myafg6ao1G",
+      "cookieJar": {
+        "version": "tough-cookie@5.1.2",
+        "storeType": "MemoryCookieStore",
+        "rejectPublicSuffixes": true,
+        "enableLooseMode": false,
+        "allowSpecialUseDomain": true,
+        "prefixSecurity": "silent",
+        "cookies": [
+          {
+            "key": "source",
+            "value": "direct",
+            "expires": "2026-03-23T16:50:05.000Z",
+            "domain": "www.arabam.com",
+            "path": "/",
+            "hostOnly": true,
+            "creation": "2026-02-21T16:50:04.353Z",
+            "lastAccessed": "2026-02-21T16:50:04.353Z"
+          },
+          {
+            "key": "sessionSource",
+            "value": "direct",
+            "expires": "2026-03-23T16:50:05.000Z",
+            "domain": "www.arabam.com",
+            "path": "/",
+            "hostOnly": true,
+            "creation": "2026-02-21T16:50:04.353Z",
+            "lastAccessed": "2026-02-21T16:50:04.353Z"
+          },
+          {
+            "key": "campaign",
+            "expires": "2026-03-23T16:50:05.000Z",
+            "domain": "www.arabam.com",
+            "path": "/",
+            "hostOnly": true,
+            "creation": "2026-02-21T16:50:04.353Z",
+            "lastAccessed": "2026-02-21T16:50:04.353Z"
+          },
+          {
+            "key": "UserGuidValue",
+            "value": "705af423de72341c1df9f29c67bc04d2",
+            "maxAge": 10368000,
+            "domain": "www.arabam.com",
+            "path": "/",
+            "secure": true,
+            "httpOnly": true,
+            "hostOnly": false,
+            "creation": "2026-02-21T16:50:04.353Z",
+            "lastAccessed": "2026-02-21T16:50:04.353Z",
+            "sameSite": "none"
+          },
+          {
+            "key": "ABTestVariant",
+            "value": "B",
+            "maxAge": 604800,
+            "domain": "www.arabam.com",
+            "path": "/",
+            "hostOnly": true,
+            "creation": "2026-02-21T16:50:04.353Z",
+            "lastAccessed": "2026-02-21T16:50:04.353Z",
+            "sameSite": "lax"
+          },
+          {
+            "key": "_cfuvid",
+            "value": "_.pXEkMV.0.u3eL_upd9fBIApP83r8nk43w4wLt4wwM-1771692605.0393739-1.0.1.1-BvN_Awt2ry1Xv1pW.8XJdvWEZqjcFDF062uc1pPBS4M",
+            "domain": "www.arabam.com",
+            "path": "/",
+            "secure": true,
+            "httpOnly": true,
+            "hostOnly": false,
+            "creation": "2026-02-21T16:50:04.353Z",
+            "lastAccessed": "2026-02-21T16:50:04.353Z",
+            "sameSite": "none"
+          }
+        ]
+      },
+      "userData": {},
+      "maxErrorScore": 3,
+      "errorScoreDecrement": 0.5,
+      "expiresAt": "2026-02-21T17:40:03.666Z",
+      "createdAt": "2026-02-21T16:50:03.666Z",
+      "usageCount": 1,
+      "maxUsageCount": 50,
+      "errorScore": 0
+    },
+    {
+      "id": "session_vqarunalja",
+      "cookieJar": {
+        "version": "tough-cookie@5.1.2",
+        "storeType": "MemoryCookieStore",
+        "rejectPublicSuffixes": true,
+        "enableLooseMode": false,
+        "allowSpecialUseDomain": true,
+        "prefixSecurity": "silent",
+        "cookies": [
+          {
+            "key": "source",
+            "value": "direct",
+            "expires": "2026-03-23T16:50:05.000Z",
+            "domain": "www.arabam.com",
+            "path": "/",
+            "hostOnly": true,
+            "creation": "2026-02-21T16:50:05.164Z",
+            "lastAccessed": "2026-02-21T16:50:05.164Z"
+          },
+          {
+            "key": "sessionSource",
+            "value": "direct",
+            "expires": "2026-03-23T16:50:05.000Z",
+            "domain": "www.arabam.com",
+            "path": "/",
+            "hostOnly": true,
+            "creation": "2026-02-21T16:50:05.164Z",
+            "lastAccessed": "2026-02-21T16:50:05.164Z"
+          },
+          {
+            "key": "campaign",
+            "expires": "2026-03-23T16:50:05.000Z",
+            "domain": "www.arabam.com",
+            "path": "/",
+            "hostOnly": true,
+            "creation": "2026-02-21T16:50:05.164Z",
+            "lastAccessed": "2026-02-21T16:50:05.164Z"
+          },
+          {
+            "key": "UserGuidValue",
+            "value": "ebfde355a957914b5507b5959d87fc51",
+            "maxAge": 10368000,
+            "domain": "www.arabam.com",
+            "path": "/",
+            "secure": true,
+            "httpOnly": true,
+            "hostOnly": false,
+            "creation": "2026-02-21T16:50:05.164Z",
+            "lastAccessed": "2026-02-21T16:50:05.164Z",
+            "sameSite": "none"
+          },
+          {
+            "key": "ABTestVariant",
+            "value": "B",
+            "maxAge": 604800,
+            "domain": "www.arabam.com",
+            "path": "/",
+            "hostOnly": true,
+            "creation": "2026-02-21T16:50:05.164Z",
+            "lastAccessed": "2026-02-21T16:50:05.164Z",
+            "sameSite": "lax"
+          },
+          {
+            "key": "_cfuvid",
+            "value": "NL1vn_leuWN4WLpmTMLiumIeRy3WHUuxNonu5kV65OQ-1771692605.8711205-1.0.1.1-y0wp2BubCVXmVm1PVJdqPxvdsu0UiuRREokR2QxwzJU",
+            "domain": "www.arabam.com",
+            "path": "/",
+            "secure": true,
+            "httpOnly": true,
+            "hostOnly": false,
+            "creation": "2026-02-21T16:50:05.164Z",
+            "lastAccessed": "2026-02-21T16:50:05.164Z",
+            "sameSite": "none"
+          }
+        ]
+      },
+      "userData": {},
+      "maxErrorScore": 3,
+      "errorScoreDecrement": 0.5,
+      "expiresAt": "2026-02-21T17:40:04.496Z",
+      "createdAt": "2026-02-21T16:50:04.496Z",
+      "usageCount": 1,
+      "maxUsageCount": 50,
+      "errorScore": 0
+    }
+  ]
+}

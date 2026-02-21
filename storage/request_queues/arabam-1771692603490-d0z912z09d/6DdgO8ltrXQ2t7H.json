@@ -1,0 +1,9 @@
+{
+	"id": "6DdgO8ltrXQ2t7H",
+	"json": "{\"id\":\"6DdgO8ltrXQ2t7H\",\"url\":\"https://www.arabam.com/ikinci-el/otomobil/bmw-5-serisi?take=200&minYear=2020&maxPrice=5000000&maxkm=100000&sort=startedAt.desc&gear=Otomatik&color=Beyaz&color=Siyah&damagestatus=Boyas%C4%B1z\",\"loadedUrl\":\"https://www.arabam.com/ikinci-el/otomobil/bmw-5-serisi?take=200&minYear=2020&maxPrice=5000000&maxkm=100000&sort=startedAt.desc&gear=Otomatik&color=Beyaz&color=Siyah&damagestatus=Boyas%C4%B1z\",\"uniqueKey\":\"https://www.arabam.com/ikinci-el/otomobil/bmw-5-serisi?color=Beyaz&color=Siyah&damagestatus=Boyas%C4%B1z&gear=Otomatik&maxPrice=5000000&maxkm=100000&minYear=2020&sort=startedAt.desc&take=200\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{},\"userData\":{\"__crawlee\":{\"state\":4}},\"handledAt\":\"2026-02-21T16:50:04.484Z\"}",
+	"method": "GET",
+	"orderNo": null,
+	"retryCount": 0,
+	"uniqueKey": "https://www.arabam.com/ikinci-el/otomobil/bmw-5-serisi?color=Beyaz&color=Siyah&damagestatus=Boyas%C4%B1z&gear=Otomatik&maxPrice=5000000&maxkm=100000&minYear=2020&sort=startedAt.desc&take=200",
+	"url": "https://www.arabam.com/ikinci-el/otomobil/bmw-5-serisi?take=200&minYear=2020&maxPrice=5000000&maxkm=100000&sort=startedAt.desc&gear=Otomatik&color=Beyaz&color=Siyah&damagestatus=Boyas%C4%B1z"
+}

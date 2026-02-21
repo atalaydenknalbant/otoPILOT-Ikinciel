@@ -1,5 +1,5 @@
 import express from 'express';
-import { Ollama } from 'ollama';
+// import { Ollama } from 'ollama';
 import { readFile } from 'fs/promises';
 import { log } from 'crawlee';
 import { ArabamScraper } from './scrape.js';
@@ -85,10 +85,8 @@ async function getPromotedAdsByBrandModel(brand, model) {
   }
 }
 
-// Ollama configuration 
-const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'tykefencer/otomodel_v1.2_q4';
-const ollama = new Ollama({ host: OLLAMA_URL });
+// Ollama parsing disabled.
+// Parsing now runs in frontend WebGPU using local ONNX model assets.
 
 // Load categories JSON (UI options)
 const carCategories = JSON.parse(
@@ -286,27 +284,12 @@ function inferCategoriesFromBrandModel(brand, model) {
 app.post('/parse', async (req, res) => {
   const { query } = req.body || {};
   if (!query) return res.status(400).json({ error: 'Sorgu boş olamaz.' });
-  log.info(`Ayrıştırma isteği alındı: "${query}"`);
-  try {
-    const systemPrompt = buildSystemPrompt(carCategories);
-    const response = await ollama.chat({
-      model: OLLAMA_MODEL,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: query },
-      ],
-      format: 'json',
-      options: { temperature: 0, top_p: 1.0, num_ctx: 2048, seed: 1 },
-      stream: false,
-    });
-    const obj = JSON.parse(response.message.content);
-    const finalJson = normalizeLLMOutput(obj);
-    log.info('LLM JSON çıktısı:', finalJson);
-    res.json(finalJson);
-  } catch (error) {
-    log.error(`LLM ayrıştırma hatası: ${error.message}`);
-    res.status(500).json({ error: 'LLM isteği ayrıştıramadı.' });
-  }
+
+  log.warning('Backend /parse devre dışı. Ayrıştırma frontend WebGPU modelinde yapılıyor.');
+  return res.status(410).json({
+    error: 'frontend_local_model_required',
+    detail: 'Ayrıştırma işlemi tarayıcıdaki WebGPU modeli ile yapılmalıdır.',
+  });
 });
 
 // Scrape endpoint

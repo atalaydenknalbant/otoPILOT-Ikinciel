@@ -1,3 +1,5 @@
+"use client"
+
 import type { ParsedFilters, CarItem, ScrapeResponse } from './types'
 
 // Frontend calls go through Next.js API routes to avoid CORS.
@@ -7,6 +9,17 @@ const API_BASE = ''
 // Global cancellation management for in-flight requests (parse/scrape)
 const controllers: Set<AbortController> = new Set()
 let currentRunId: string | null = null
+type LLMInfo = {
+  source: 'onnx' | 'backend' | 'heuristic'
+  error?: string
+  onnxRawText?: string
+  onnxJson?: unknown
+}
+let lastLLMInfo: LLMInfo | null = null
+
+export function getLastLLMInfo() {
+  return lastLLMInfo
+}
 
 export function beginNewRun() {
   // Use simple unique id
@@ -46,15 +59,18 @@ function createTrackedController(): AbortController {
 // POST /parse with { query }
 export async function parseWithLocalModel(query: string): Promise<ParsedFilters> {
   try {
-    const ac = createTrackedController()
-    const res = await fetch(`${API_BASE}/api/parse`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(currentRunId ? { 'x-run-id': currentRunId } : {}) },
-      body: JSON.stringify({ query }),
-      signal: ac.signal,
-    })
-    if (res.ok) return await res.json()
-  } catch {}
+    const { runLocalParse } = await import('./client-llm')
+    const { json, raw } = await runLocalParse(query)
+    if (json && typeof json === 'object') {
+      lastLLMInfo = { source: 'onnx', onnxRawText: raw, onnxJson: json }
+      return json as ParsedFilters
+    }
+    lastLLMInfo = { source: 'onnx', onnxRawText: raw, onnxJson: null, error: 'Model gecerli JSON dondurmedi.' }
+    throw new Error(`Model JSON cikaramadi: ${raw?.slice(0, 220) || 'bos yanit'}`)
+  } catch (e) {
+    lastLLMInfo = { source: 'heuristic', error: e instanceof Error ? e.message : String(e) }
+    console.error('Yerel model parse hatasi:', e)
+  }
   // Fallback: basit cikarim
   const maxPrice = query.match(/(\d{2,6})\s*(k|bin|k\s*tl|tl)/i)?.[1]
   const year = query.match(/(20\d{2}|19\d{2})/i)?.[1]
