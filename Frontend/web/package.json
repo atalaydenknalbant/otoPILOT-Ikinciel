@@ -11,7 +11,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@huggingface/transformers": "4.0.0-next.3",
+    "@huggingface/transformers": "4.2.0",
     "clsx": "2.1.1",
     "firebase": "^12.2.1",
     "next": "14.2.32",
