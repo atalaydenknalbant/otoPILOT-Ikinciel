@@ -22,6 +22,12 @@ The model is a Qwen3 2B text model converted for browser-side WebGPU inference w
 
 **Convert Turkish natural-language car search queries into JSON filters only.**
 
+## 🧪 Synthetic Training Dataset
+
+To fine-tune the model for this exact domain, we created a synthetic dataset with about **100,000 rows** of Turkish car-search queries and matching JSON filter outputs.
+
+The dataset teaches the model how to map real user-style requests into structured filters such as brand, model, year range, price range, mileage, city, color, fuel type, transmission type, damage status, and sorting.
+
 Example user request:
 
 ```text
