@@ -1,6 +1,12 @@
+**Created by:** Atalay Denknalbant and Mehmet Şirin Güldaş
+
 # 🚗 otoPILOT İkinciel
 
-**Created by:** Atalay Denknalbant and Mehmet Şirin Güldaş
+<img width="960" height="725" alt="bandicam2026-05-1921-33-54-479-ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/8cbd9388-7e32-49e1-828c-cab85d64c4d2" />
+
+
+
+
 
 otoPILOT İkinciel is an AI-powered used-car search engine. It lets users search vehicle listings with natural language, converts the request into structured JSON filters with a local WebGPU model, and then uses those filters to crawl car listing data from **arabam.com**.
 
